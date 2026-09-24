@@ -74,4 +74,65 @@ https://foximax.com/`,
 5/7`,
     expected: { puzzle: "2026-09-23", score: 5, display: "5/7" },
   },
+  {
+    id: "poople",
+    text: `Poople #405 6/5
+⬜⬜⬜⬜
+⬜⬜⬜⬜
+⬜🟫⬜⬜
+⬜🟫🟫⬜
+⬜🟫🟫⬜
+⬜🟫🟫🟫
+🟫🟫🟫🟫
+
+https://poople.io/`,
+    expected: { puzzle: "405", score: 6, display: "6/5" },
+  },
+  {
+    id: "metazooa",
+    text: `🦫 Animal #1151 🦖
+I figured it out in 6 guesses!
+🟧🟧🟧🟧🟧🟩
+🔥 1 | Avg. Guesses: 5.5
+
+https://metazooa.com
+#metazooa`,
+    expected: { puzzle: "1151", score: 6, display: "6" },
+  },
+  {
+    id: "boludle",
+    text: `boludle.com #1683 4/6
+
+⬜🟨⬜⬜🟨
+⬜🟨⬜⬜🟩
+⬜🟨🟩⬜🟩
+🟩🟩🟩🟩🟩
+
+#boludle`,
+    expected: { puzzle: "1683", score: 4, display: "4/6" },
+  },
+  {
+    id: "boludle",
+    text: `boludle.com #1684 X/6
+
+⬜🟨⬜⬜🟨
+
+#boludle`,
+    expected: { puzzle: "1684", score: null, display: "X/6" },
+  },
+  {
+    id: "pedantle",
+    text: `I found #pedantle #1585 in 89 guesses!
+🟩🟩🟩🟩🟩🟧🟧🟧🟧🟧🟧🟥🟥🟥🟥🟥🟥🟥🟥🟥
+https://pedantle.certitudes.org/`,
+    expected: { puzzle: "1585", score: 89, display: "89" },
+  },
+  {
+    id: "catfishing",
+    text: `catfishing.net
+#818 - 4.5/10
+🐟🐟🐟🐟🥚
+🐈🐟🐈🐈🐈`,
+    expected: { puzzle: "818", score: 4.5, display: "4.5/10" },
+  },
 ];

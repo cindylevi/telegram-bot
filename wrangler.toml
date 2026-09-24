@@ -1,0 +1,16 @@
+name = "resumen-juegos-bot"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+GROUP_CHAT_ID = "0"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "resumen-juegos"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[triggers]
+crons = ["59 2 * * *"]

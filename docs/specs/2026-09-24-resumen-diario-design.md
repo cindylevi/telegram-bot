@@ -4,7 +4,7 @@
 
 ## Objetivo
 
-En un grupo de Telegram cada persona pega el resultado de sus juegos diarios (4x3, Magnitudle, Boludle, etc.). El bot lee esos mensajes, guarda los resultados y al final de cada día publica en el grupo un resumen por juego: cuántas personas jugaron, el promedio y quién sacó el mejor puntaje, más el juego más jugado del día.
+En un grupo de Telegram cada persona pega el resultado de sus juegos diarios (4x3, Magnitudle, Boludle, etc.). El bot lee esos mensajes, guarda los resultados y al final de cada día publica en el grupo un resumen por juego: cuántas personas jugaron, el promedio y quién sacó el mejor puntaje, más el juego más jugado del día. Además muestra la racha actual más larga de cada juego y un ranking histórico de partidas jugadas.
 
 **Criterios de éxito:**
 
@@ -20,7 +20,9 @@ En un grupo de Telegram cada persona pega el resultado de sus juegos diarios (4x
 - **Lenguaje:** TypeScript.
 - **Día:** se define por la hora de envío en `America/Argentina/Buenos_Aires`.
 - **Duplicados:** si alguien manda el mismo puzzle dos veces, vale el primero.
-- **Puzzles de archivo:** por juego y por día solo cuenta el puzzle más jugado; el resto se ignora en el resumen.
+- **Puzzles de archivo:** por juego y por día solo cuenta el puzzle más jugado; el resto se ignora en el resumen, en las rachas y en el ranking histórico.
+- **Rachas:** se mide la racha **actual** (días seguidos hasta el día del resumen), no la más larga de la historia.
+- **Ranking histórico:** total acumulado de partidas desde que arrancó el bot (no hay historial previo: la API de bots no lee mensajes viejos).
 - **Repo:** GitHub personal `cindylevi/telegram-bot`, remote vía el alias SSH `github-tesis`.
 
 ## Arquitectura
@@ -40,8 +42,8 @@ Cron 02:59 UTC ──▶ Worker (scheduled) ──▶ arma resumen ◀───�
 - `src/telegram.ts` — tipos mínimos del Update de Telegram y `sendMessage`.
 - `src/games/*.ts` — un parser por juego, todos con la misma interfaz.
 - `src/games/index.ts` — registro de todos los parsers y `parseResult(text)`.
-- `src/store.ts` — acceso a D1: insertar resultado, leer resultados de un día.
-- `src/summary.ts` — función pura: resultados de un día → texto del resumen.
+- `src/store.ts` — acceso a D1: insertar resultado, leer todos los resultados del grupo.
+- `src/summary.ts` — función pura: resultados + día → texto del resumen (incluye rachas y ranking histórico).
 - `src/date.ts` — día en hora argentina a partir de un timestamp.
 - `migrations/0001_results.sql` — esquema de D1.
 
@@ -133,15 +135,31 @@ El `UNIQUE` + `INSERT OR IGNORE` implementa "vale el primero".
 
 **Disparo:** cron `59 2 * * *` (UTC) = 23:59 en Argentina (UTC-3, sin horario de verano). Resume el día que termina. También se dispara a mano con `/resumen`.
 
-**Cálculo** (función pura sobre los resultados del día):
+**Resultados válidos** (base de todo lo que sigue): para cada par (juego, día) se queda solo el puzzle con más resultados; si empatan, el de mayor número o fecha más reciente. El resto (puzzles de archivo) se descarta.
+
+**Cálculo del día** (función pura sobre los resultados válidos del día del resumen):
 
 1. Agrupar por juego.
-2. En cada juego, quedarse con el puzzle con más resultados. Si empatan, el de mayor número o fecha más reciente.
-3. Ordenar jugadores por puntaje según `direction`; los fails van al final.
-4. Promedio sobre los puntajes que no son fail, redondeado a 1 decimal (entero si da exacto).
-5. Si hay más de 6 jugadores se muestra podio (🥇🥈🥉); si no, solo 🥇. Los empates comparten lugar y se listan juntos en la misma línea.
-6. Juego más jugado: el de más jugadores; si empatan, se listan todos.
-7. Los juegos sin jugadores no aparecen. Si ese día no jugó nadie, no se manda nada.
+2. Ordenar jugadores por puntaje según `direction`; los fails van al final.
+3. Promedio sobre los puntajes que no son fail, redondeado a 1 decimal (entero si da exacto).
+4. Si hay más de 6 jugadores se muestra podio (🥇🥈🥉); si no, solo 🥇. Los empates comparten lugar y se listan juntos en la misma línea.
+5. Juego más jugado: el de más jugadores; si empatan, se listan todos.
+6. Los juegos sin jugadores no aparecen. Si ese día no jugó nadie, no se manda nada (tampoco rachas ni ranking).
+
+**Racha por juego** (sobre todos los resultados válidos):
+
+- La racha actual de una persona en un juego es la cantidad de días consecutivos, terminando en el día del resumen, en los que tiene un resultado válido de ese juego. Un fail cuenta como día jugado.
+- Por cada juego que aparece en el resumen se muestra la racha más larga entre quienes lo jugaron ese día. Empates se listan juntos.
+- Solo se muestra si es de 2 días o más (una racha de 1 es simplemente haber jugado hoy).
+- Con `/resumen` a mitad del día, quien todavía no jugó hoy no tiene racha activa: el número refleja "hasta ahora".
+
+**Ranking histórico** (sobre todos los resultados válidos, incluido el día del resumen):
+
+- Total de partidas por persona (cada resultado válido cuenta 1, fails incluidos).
+- Top 3, con empates compartiendo lugar. Se muestra al final del resumen.
+- El nombre que se muestra es el `user_name` más reciente de esa persona.
+
+**Volumen:** `store.ts` trae todos los resultados del grupo y el cálculo se hace en memoria. Para un grupo (~10 personas × ~11 juegos × 365 días ≈ 40k filas por año) entra holgado en el plan free de D1; si algún día pesa, se pasa a SQL.
 
 **Formato:**
 
@@ -154,9 +172,15 @@ El `UNIQUE` + `INSERT OR IGNORE` implementa "vale el primero".
    🥇 Cindy — 161
    🥈 Juan — 150
    🥉 Ana — 140
+   🔥 Racha: Juan, 12 días
 
 🐸 Boludle — 3 personas · promedio 4.5
    🥇 Juan — 4/6
+
+🏆 Ranking histórico
+   🥇 Cindy — 143 partidas
+   🥈 Juan — 120
+   🥉 Ana — 98
 ```
 
 Los juegos se ordenan por cantidad de jugadores (de más a menos).
@@ -172,10 +196,13 @@ Los juegos se ordenan por cantidad de jugadores (de más a menos).
 - **Vitest** con `@cloudflare/vitest-pool-workers` (corre sobre Miniflare, con D1 local).
 - **Parsers:** cada fixture real parsea al puzzle y puntaje esperados; un texto cualquiera no matchea con ningún parser; ningún fixture matchea con dos parsers.
 - **Resumen:** casos de un jugador, más de 6 (podio), empates, fails, puzzles de archivo descartados, día vacío.
+- **Rachas:** racha que se corta por un día sin jugar, racha que no cuenta un puzzle de archivo, racha de 1 que no se muestra, empate de rachas.
+- **Ranking histórico:** conteo sobre varios días, empates, cambio de nombre de una persona.
 - **Integración:** un update simulado por `/webhook` termina en una fila de D1; el duplicado se ignora; un secreto inválido da 401; un chat ajeno se ignora.
 
 ## Fuera de alcance
 
-- Estadísticas históricas (rachas, rankings semanales o mensuales).
+- Rachas históricas (la más larga de siempre) y rankings semanales o mensuales.
+- Importar resultados anteriores al arranque del bot.
 - Configurar juegos desde el chat.
 - Más de un grupo.

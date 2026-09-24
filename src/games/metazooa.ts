@@ -7,9 +7,8 @@ export const metazooa: Game = {
   direction: "lower",
   parse(text) {
     if (!/metazooa/i.test(text)) return null;
-    const puzzle = text.match(/Animal\s+#(\d+)/i);
-    const guesses = text.match(/\bin\s+(\d+)\s+guess(?:es)?\b/i);
-    if (!puzzle || !guesses) return null;
-    return { puzzle: puzzle[1], score: Number(guesses[1]), display: guesses[1] };
+    const match = text.match(/Animal\s+#(\d+)[^\n]*\n\s*I figured it out in\s+(\d+)\s+guess(?:es)?\b/i);
+    if (!match) return null;
+    return { puzzle: match[1], score: Number(match[2]), display: match[2] };
   },
 };

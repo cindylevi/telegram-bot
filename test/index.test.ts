@@ -67,6 +67,27 @@ describe("webhook", () => {
     expect((await storedRows())[0]).toMatchObject({ game: "size-it-up", puzzle: "2026-09-24" });
   });
 
+  it("guarda todos los resultados de un mensaje con varios juegos", async () => {
+    const pedantle = FIXTURES.find((f) => f.id === "pedantle")!.text;
+    const metazooa = FIXTURES.find((f) => f.id === "metazooa")!.text;
+    await post({ update_id: 1, message: message({ text: `${pedantle}\n\n${metazooa}` }) });
+    const rows = await env.DB.prepare("SELECT game, score FROM results ORDER BY game").all();
+    expect(rows.results).toEqual([
+      { game: "metazooa", score: 6 },
+      { game: "pedantle", score: 89 },
+    ]);
+  });
+
+  it("avisa en los logs cuando el grupo se migra a supergrupo", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await post({ update_id: 1, message: message({ text: undefined, migrate_to_chat_id: -100999 }) });
+    await post({ update_id: 2, message: message({ chat: { id: -100999 }, text: undefined, migrate_from_chat_id: CHAT }) });
+    expect(warn.mock.calls.map((call) => String(call[0]))).toEqual([
+      expect.stringContaining("UPDATE results SET chat_id = -100999 WHERE chat_id = -1001"),
+      expect.stringContaining("-100999"),
+    ]);
+  });
+
   it("ignora el duplicado", async () => {
     await post({ update_id: 1, message: message() });
     await post({ update_id: 2, message: message({ message_id: 2 }) });

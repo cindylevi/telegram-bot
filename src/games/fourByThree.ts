@@ -13,11 +13,10 @@ export const fourByThree: Game = {
   direction: "higher",
   parse(text) {
     if (!/4x3\.fun/i.test(text)) return null;
-    const score = text.match(/(\d+)\s+points?\b/i);
-    if (!score) return null;
-    const date = text.match(/\b([a-z]+)\s+(\d{1,2}),\s*(\d{4})\b/i);
-    const month = date ? MONTHS.indexOf(date[1].toLowerCase()) : -1;
-    const puzzle = date && month >= 0 ? isoDate(Number(date[3]), month + 1, Number(date[2])) : null;
-    return { puzzle, score: Number(score[1]), display: score[1] };
+    const match = text.match(/\b([a-z]+)\s+(\d{1,2}),\s*(\d{4})\s*\n\s*(\d+)\s+points?\b/i);
+    if (!match) return null;
+    const month = MONTHS.indexOf(match[1].toLowerCase());
+    const puzzle = month >= 0 ? isoDate(Number(match[3]), month + 1, Number(match[2])) : null;
+    return { puzzle, score: Number(match[4]), display: match[4] };
   },
 };

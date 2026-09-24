@@ -6,8 +6,7 @@ export const catfishing: Game = {
   emoji: "🐈",
   direction: "higher",
   parse(text) {
-    if (!/catfishing\.net/i.test(text)) return null;
-    const match = text.match(/#(\d+)\s*-\s*(\d+(?:\.\d+)?)\s*\/\s*10\b/);
+    const match = text.match(/catfishing\.net\s*\n\s*#(\d+)\s*-\s*(\d+(?:\.\d+)?)\s*\/\s*10\b/i);
     if (!match) return null;
     return { puzzle: match[1], score: Number(match[2]), display: `${match[2]}/10` };
   },

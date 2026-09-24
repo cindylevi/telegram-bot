@@ -11,6 +11,8 @@ export interface TelegramMessage {
   chat: { id: number };
   from?: TelegramUser;
   text?: string;
+  migrate_to_chat_id?: number;
+  migrate_from_chat_id?: number;
 }
 
 export interface TelegramUpdate {

@@ -6,8 +6,7 @@ export const sizeItUp: Game = {
   emoji: "📐",
   direction: "higher",
   parse(text) {
-    if (!/Size It Up/i.test(text)) return null;
-    const score = text.match(/Overall Score\s*:?\s*(\d+)/i);
+    const score = text.match(/^\s*Size It Up\s*\n\s*Overall Score\s*:?\s*(\d+)/im);
     if (!score) return null;
     return { puzzle: null, score: Number(score[1]), display: score[1] };
   },

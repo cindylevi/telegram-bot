@@ -21,10 +21,10 @@ export interface Match {
   result: ParsedResult;
 }
 
-export function parseResult(text: string): Match | null {
-  for (const game of GAMES) {
+// Un mensaje puede traer varios resultados pegados juntos: se devuelve uno por juego.
+export function parseResults(text: string): Match[] {
+  return GAMES.flatMap((game) => {
     const result = game.parse(text);
-    if (result) return { game, result };
-  }
-  return null;
+    return result ? [{ game, result }] : [];
+  });
 }

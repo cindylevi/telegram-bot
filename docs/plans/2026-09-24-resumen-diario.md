@@ -2067,6 +2067,7 @@ Esta task la hace la usuaria con acompañamiento: incluye crear cuentas, loguear
 1. Hablarle a **@BotFather**: `/newbot`, elegir nombre y username. Guardar el token en un lugar seguro (no en el repo).
 2. `/setprivacy` → elegir el bot → **Disable**.
 3. Agregar el bot al grupo. Si ya estaba agregado antes de apagar el privacy mode, sacarlo y volverlo a agregar para que tome el cambio.
+4. Convertir el grupo a supergrupo **antes** de sacar el id: en la config del grupo, poner "Historial del chat para nuevos miembros" en **Visible**. Así el id ya queda en su forma final (`-100…`) y no cambia después.
 
 - [ ] **Step 2: Obtener el id del grupo**
 

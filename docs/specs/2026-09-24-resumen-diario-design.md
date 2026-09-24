@@ -190,6 +190,8 @@ Los juegos se ordenan por cantidad de jugadores (de más a menos).
 - Un error en el webhook se loguea con `console.error` y se responde 200.
 - Si falla el `sendMessage` del cron, se loguea; no hay reintento (el resumen se puede pedir con `/resumen` hasta las 23:59; después de esa hora, el `/resumen` ya muestra el día nuevo).
 - Los logs se miran con `wrangler tail`.
+- **Migración a supergrupo:** Telegram le cambia el id al grupo (por ejemplo al hacer visible el historial para nuevos miembros). El bot loguea un `console.warn` con el id nuevo y el SQL a correr: `UPDATE results SET chat_id = <nuevo> WHERE chat_id = <viejo>`. Después hay que actualizar `GROUP_CHAT_ID` y redeployar. Para evitarlo, conviene que el grupo ya sea supergrupo (id `-100…`) antes de configurar el bot.
+- **Varios resultados en un mensaje:** se guarda uno por juego; cada parser lee solo su propio bloque.
 
 ## Tests
 

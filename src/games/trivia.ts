@@ -17,12 +17,12 @@ export const trivia: Game = {
   emoji: "🎓",
   direction: "higher",
   parse(text) {
-    if (!/latriviadeldia\.com/i.test(text)) return null;
-    const score = text.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/m);
-    if (!score) return null;
-    const date = text.match(/(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})/i);
-    const month = date ? monthIndex(date[2]) : -1;
-    const puzzle = date && month >= 0 ? isoDate(Number(date[3]), month + 1, Number(date[1])) : null;
-    return { puzzle, score: Number(score[1]), display: `${score[1]}/${score[2]}` };
+    const match = text.match(
+      /latriviadeldia\.com[^\n]*\n\s*(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})\s*\n(?:[^\n]*\n){0,2}?\s*(\d+)\s*\/\s*(\d+)[ \t]*(?:\n|$)/i,
+    );
+    if (!match) return null;
+    const month = monthIndex(match[2]);
+    const puzzle = month >= 0 ? isoDate(Number(match[3]), month + 1, Number(match[1])) : null;
+    return { puzzle, score: Number(match[4]), display: `${match[4]}/${match[5]}` };
   },
 };

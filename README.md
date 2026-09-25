@@ -14,7 +14,6 @@ Corre en **Cloudflare Workers** (plan gratis) con una base **D1**. El diseño co
 | Cloudflare | `granger.eliana@gmail.com` (Worker `resumen-juegos-bot`, base D1 `resumen-juegos`) |
 | Telegram | bot `@StatsReseteoBot` (token en BotFather), grupo con id `-1002950901334` |
 
-Nada de esto usa cuentas de Brubank. El `user.email` global de la compu es el del trabajo, así que el repo tiene seteado el mail personal a nivel local.
 
 ## Preparar la compu (una sola vez)
 

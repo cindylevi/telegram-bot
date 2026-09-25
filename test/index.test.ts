@@ -191,12 +191,68 @@ describe("/help", () => {
     await post({ update_id: 1, message: message({ text: "/help@StatsReseteoBot" }) });
     expect(sentTexts()).toHaveLength(1);
     const lines = sentTexts()[0].split("\n");
-    for (const command of ["/resumen", "/listdles", "/help"]) {
+    for (const command of ["/resumen", "/listdles", "/detalle", "/help"]) {
       expect(sentTexts()[0]).toContain(command);
     }
     for (const game of GAMES) {
       expect(lines).toContain(`/${commandName(game)}detalle — ${game.emoji} ${game.name}`);
     }
+  });
+});
+
+describe("/detalle <nombre>", () => {
+  const rafa = { id: 2, is_bot: false, first_name: "Rafa" };
+  const rafael = { id: 3, is_bot: false, first_name: "Rafael" };
+
+  async function seed() {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    await post({ update_id: 3, message: message({ message_id: 3, from: rafael }) });
+  }
+
+  it("con el nombre exacto muestra a esa persona aunque otro nombre empiece igual", async () => {
+    await seed();
+    await post({ update_id: 4, message: message({ message_id: 4, text: "/detalle Rafa" }) });
+    expect(sentTexts()[0]).toMatch(/^👤 Rafa — detalle/);
+    expect(sentTexts()[0]).toContain("Ya jugó");
+  });
+
+  it("si el comienzo coincide con varios, los lista", async () => {
+    await seed();
+    await post({ update_id: 4, message: message({ message_id: 4, text: "/detalle@StatsReseteoBot raf" }) });
+    expect(sentTexts()).toEqual([
+      "Hay más de una persona con ese nombre:\n• Rafa → /detalle Rafa\n• Rafael → /detalle Rafael",
+    ]);
+  });
+
+  it("sin nombre muestra el propio", async () => {
+    await seed();
+    await post({ update_id: 4, message: message({ message_id: 4, text: "/detalle" }) });
+    expect(sentTexts()[0]).toMatch(/^👤 Cindy — detalle/);
+    expect(sentTexts()[0]).toContain("Ya jugaste");
+  });
+
+  it("respondiendo a un mensaje muestra a quien lo mandó", async () => {
+    await seed();
+    const replied = message({ message_id: 3, from: rafael });
+    await post({ update_id: 4, message: message({ message_id: 4, text: "/detalle", reply_to_message: replied }) });
+    expect(sentTexts()[0]).toMatch(/^👤 Rafael — detalle/);
+  });
+
+  it("avisa si no encuentra a nadie", async () => {
+    await seed();
+    await post({ update_id: 4, message: message({ message_id: 4, text: "/detalle Juan" }) });
+    expect(sentTexts()).toEqual(["No encontré a nadie que se llame así."]);
+  });
+
+  it("si dos personas se llaman igual, pide responder a un mensaje", async () => {
+    await seed();
+    const otroRafa = { id: 4, is_bot: false, first_name: "Rafa" };
+    await post({ update_id: 4, message: message({ message_id: 4, from: otroRafa }) });
+    await post({ update_id: 5, message: message({ message_id: 5, text: "/detalle rafa" }) });
+    expect(sentTexts()).toEqual([
+      "Hay más de una persona que se llama Rafa. Mandá /detalle respondiendo a un mensaje de la que querés.",
+    ]);
   });
 });
 

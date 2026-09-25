@@ -2,20 +2,23 @@ import { dayInArgentina } from "./date";
 import type { Env } from "./env";
 import { buildDetail } from "./detail";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
-import { loadResults, saveResult } from "./store";
+import { buildProfile, findPlayers, playerById } from "./profile";
+import { loadResults, saveResult, type StoredResult } from "./store";
 import { buildSummary } from "./summary";
-import { isChatMember, sendMessage, type TelegramUpdate } from "./telegram";
+import { isChatMember, sendMessage, type TelegramMessage, type TelegramUpdate, type TelegramUser } from "./telegram";
 
 const SUMMARY_COMMAND = /^\/resumen(@\w+)?(\s|$)/i;
 const LIST_COMMAND = /^\/listdles(@\w+)?(\s|$)/i;
 const DETAIL_COMMAND = /^\/([a-z0-9]+)detalle(@\w+)?(\s|$)/i;
 const HELP_COMMAND = /^\/(help|start)(@\w+)?(\s|$)/i;
+const PERSON_COMMAND = /^\/detalle(@\w+)?(?:\s+([\s\S]+))?$/i;
 
 const HELP = [
   "🤖 Comandos",
   "",
   "/resumen — el resumen de hoy hasta ahora",
   "/listdles — los juegos que reconozco, con su link",
+  "/detalle <nombre> — partidas, oros, récords y qué le falta jugar hoy a alguien (sin nombre, el tuyo; también respondiendo a un mensaje suyo)",
   "/help — esta ayuda",
   "",
   "📊 Detalle de cada juego (ranking de hoy, récords y rachas)",
@@ -31,6 +34,25 @@ async function postSummary(env: Env, day: string): Promise<boolean> {
   if (summary === null) return false;
   await sendMessage(env.BOT_TOKEN, chatId, summary);
   return true;
+}
+
+// A quién pide ver /detalle: la persona del mensaje respondido, la del nombre, o quien lo pide.
+function personDetail(rows: StoredResult[], message: TelegramMessage, from: TelegramUser, query: string | undefined, day: string): string {
+  const show = (userId: number, name: string) => buildProfile(rows, playerById(rows, userId, name), day, userId === from.id);
+
+  const replied = message.reply_to_message?.from;
+  if (replied && !replied.is_bot) return show(replied.id, replied.first_name);
+  if (!query) return show(from.id, from.first_name);
+
+  const { exact, matches } = findPlayers(rows, query);
+  if (matches.length === 0) return "No encontré a nadie que se llame así.";
+  if (matches.length > 1 && exact) {
+    return `Hay más de una persona que se llama ${matches[0].name}. Mandá /detalle respondiendo a un mensaje de la que querés.`;
+  }
+  if (matches.length > 1) {
+    return ["Hay más de una persona con ese nombre:", ...matches.map((p) => `• ${p.name} → /detalle ${p.name}`)].join("\n");
+  }
+  return show(matches[0].userId, matches[0].name);
 }
 
 async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
@@ -77,6 +99,13 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
 
   if (LIST_COMMAND.test(message.text)) {
     await reply(listGames());
+    return;
+  }
+
+  const person = message.text.match(PERSON_COMMAND);
+  if (person) {
+    const rows = await loadResults(env.DB, groupId);
+    await reply(personDetail(rows, message, message.from, person[2]?.trim(), day));
     return;
   }
 

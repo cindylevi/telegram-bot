@@ -181,17 +181,29 @@ export function bestEver(valid: StoredResult[], game: string, direction: Directi
   };
 }
 
+// La tanda de días seguidos más larga (la primera, si hay varias iguales).
+export function longestRun(days: Iterable<string>): { days: number; from: string; to: string } {
+  let run = { days: 0, from: "", to: "" };
+  let longest = run;
+  for (const day of [...days].sort()) {
+    run = run.days > 0 && previousDay(day) === run.to ? { ...run, days: run.days + 1, to: day } : { days: 1, from: day, to: day };
+    if (run.days > longest.days) longest = run;
+  }
+  return longest;
+}
+
+// Días seguidos jugados terminando en `day` (0 si ese día no jugó).
+export function streakEndingAt(days: Set<string>, day: string): number {
+  let count = 0;
+  for (let current = day; days.has(current); current = previousDay(current)) count += 1;
+  return count;
+}
+
 export function longestStreakEver(valid: StoredResult[], game: string): HistoricStreak | null {
   let best: { names: string[]; days: number; from: string; to: string } | null = null;
 
   for (const player of playersOf(valid, game).values()) {
-    const days = [...player.days].sort();
-    let run = { days: 0, from: "", to: "" };
-    let longest = run;
-    for (const day of days) {
-      run = run.days > 0 && previousDay(day) === run.to ? { ...run, days: run.days + 1, to: day } : { days: 1, from: day, to: day };
-      if (run.days > longest.days) longest = run;
-    }
+    const longest = longestRun(player.days);
 
     if (!best || longest.days > best.days) best = { names: [player.name], ...longest };
     else if (longest.days === best.days) best.names.push(player.name);
@@ -209,8 +221,7 @@ export function currentStreaks(valid: StoredResult[], game: string, day: string)
   for (const player of playersOf(valid, game).values()) {
     const start = player.days.has(day) ? day : player.days.has(yesterday) ? yesterday : null;
     if (!start) continue;
-    let days = 0;
-    for (let current = start; player.days.has(current); current = previousDay(current)) days += 1;
+    const days = streakEndingAt(player.days, start);
     if (days >= 2) streaks.push({ name: player.name, days, pendingToday: start !== day });
   }
 
@@ -222,8 +233,8 @@ export interface MedalEntry {
   golds: number;
 }
 
-// Primeros puestos de cada día en un juego; un empate en el primero le da oro a todos los empatados.
-export function goldMedals(valid: StoredResult[], game: string, direction: Direction): MedalEntry[] {
+// Oros por persona en un juego: primeros puestos de cada día, y un empate en el primero le da oro a todos.
+export function goldCounts(valid: StoredResult[], game: string, direction: Direction): Map<number, number> {
   const gameRows = valid.filter((row) => row.game === game);
   const golds = new Map<number, number>();
   for (const player of playersOf(valid, game).keys()) golds.set(player, 0);
@@ -237,7 +248,11 @@ export function goldMedals(valid: StoredResult[], game: string, direction: Direc
     );
     for (const userId of winners) golds.set(userId, golds.get(userId)! + 1);
   }
+  return golds;
+}
 
+export function goldMedals(valid: StoredResult[], game: string, direction: Direction): MedalEntry[] {
+  const golds = goldCounts(valid, game, direction);
   const players = playersOf(valid, game);
   const sorted = [...golds].filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
   const medals: MedalEntry[] = [];

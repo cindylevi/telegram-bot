@@ -187,6 +187,7 @@ Los juegos se ordenan por cantidad de jugadores (de más a menos).
 
 ## Comandos
 
+- **Por privado** funcionan los mismos comandos (y `/start`, que muestra la ayuda), siempre con los datos del grupo y respondiendo en el privado. Solo para miembros del grupo: el bot lo chequea con `getChatMember` y si no lo es responde "Este bot es solo para los miembros del grupo." Los resultados mandados por privado no se guardan; el bot avisa que se manden en el grupo.
 - `/help`: la lista de comandos.
 - `/resumen`: el resumen del día hasta ese momento.
 - `/listdles`: los juegos reconocidos, con su link y su comando de detalle.

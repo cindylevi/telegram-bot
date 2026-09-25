@@ -15,9 +15,16 @@ const DATE = Date.UTC(2026, 8, 24, 18, 0) / 1000;
 const boludle = FIXTURES.find((f) => f.id === "boludle")!.text;
 
 let fetchSpy: MockInstance<typeof fetch>;
+let memberStatus = "member";
 
 beforeEach(() => {
-  fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response("{}"));
+  memberStatus = "member";
+  fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+    if (String(url).endsWith("/getChatMember")) {
+      return new Response(JSON.stringify({ ok: true, result: { status: memberStatus } }));
+    }
+    return new Response("{}");
+  });
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -49,8 +56,14 @@ async function storedRows() {
   return (await env.DB.prepare("SELECT user_id, user_name, game, puzzle, day FROM results").all()).results;
 }
 
+function sent(): { chat_id: number; text: string }[] {
+  return fetchSpy.mock.calls
+    .filter(([url]) => String(url).endsWith("/sendMessage"))
+    .map(([, init]) => JSON.parse(String(init?.body)));
+}
+
 function sentTexts(): string[] {
-  return fetchSpy.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).text);
+  return sent().map((body) => body.text);
 }
 
 describe("webhook", () => {
@@ -184,6 +197,48 @@ describe("/help", () => {
     for (const game of GAMES) {
       expect(lines).toContain(`/${commandName(game)}detalle — ${game.emoji} ${game.name}`);
     }
+  });
+});
+
+describe("por privado", () => {
+  const USER = 42;
+  const dm = (overrides: Partial<TelegramMessage> = {}) =>
+    message({ chat: { id: USER, type: "private" }, ...overrides });
+
+  it("responde /resumen en el privado con los datos del grupo", async () => {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: dm({ message_id: 2, text: "/resumen" }) });
+    expect(sent()).toEqual([{ chat_id: USER, text: expect.stringContaining("📊 Resumen del 24/09") }]);
+  });
+
+  it("responde el detalle de un juego en el privado", async () => {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: dm({ message_id: 2, text: "/boludledetalle" }) });
+    expect(sent()).toEqual([{ chat_id: USER, text: expect.stringContaining("🥇 Cindy — 4/6") }]);
+  });
+
+  it("/start muestra la ayuda", async () => {
+    await post({ update_id: 1, message: dm({ text: "/start" }) });
+    expect(sentTexts()[0]).toMatch(/^🤖 Comandos/);
+  });
+
+  it("rechaza a quien no es del grupo", async () => {
+    memberStatus = "left";
+    await post({ update_id: 1, message: dm({ text: "/help" }) });
+    expect(sent()).toEqual([{ chat_id: USER, text: "Este bot es solo para los miembros del grupo." }]);
+    const check = fetchSpy.mock.calls.find(([url]) => String(url).endsWith("/getChatMember"))!;
+    expect(JSON.parse(String(check[1]?.body))).toEqual({ chat_id: CHAT, user_id: USER });
+  });
+
+  it("no guarda resultados mandados por privado y avisa", async () => {
+    await post({ update_id: 1, message: dm() });
+    expect(await storedRows()).toHaveLength(0);
+    expect(sentTexts()).toEqual(["Los resultados mandalos en el grupo así cuentan 😉"]);
+  });
+
+  it("ignora la charla por privado", async () => {
+    await post({ update_id: 1, message: dm({ text: "hola" }) });
+    expect(sent()).toEqual([]);
   });
 });
 

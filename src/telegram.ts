@@ -8,7 +8,7 @@ export interface TelegramUser {
 export interface TelegramMessage {
   message_id: number;
   date: number;
-  chat: { id: number };
+  chat: { id: number; type?: string };
   from?: TelegramUser;
   text?: string;
   migrate_to_chat_id?: number;
@@ -54,4 +54,18 @@ export async function sendMessage(token: string, chatId: number, text: string): 
       throw new Error(`sendMessage ${response.status}: ${await response.text()}`);
     }
   }
+}
+
+// Si userId está en el grupo (también cuenta un restringido que sigue adentro).
+export async function isChatMember(token: string, chatId: number, userId: number): Promise<boolean> {
+  const response = await fetch(`https://api.telegram.org/bot${token}/getChatMember`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId }),
+  });
+  if (!response.ok) return false;
+  const data = await response.json<{ result?: { status: string; is_member?: boolean } }>();
+  const status = data.result?.status;
+  if (status === "restricted") return data.result?.is_member === true;
+  return status === "member" || status === "administrator" || status === "creator";
 }

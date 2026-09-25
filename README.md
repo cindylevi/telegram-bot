@@ -2,6 +2,8 @@
 
 Bot de Telegram (`@StatsReseteoBot`) para el grupo "eee reseteo": guarda los resultados de juegos diarios que se pegan en el grupo y todos los días a las 23:58 (hora de Argentina) publica un resumen con promedio, podio, rachas y ranking histórico.
 
+Los comandos (`/help`, `/resumen`, `/listdles`, `/<juego>detalle`) también andan por privado con el bot, solo para miembros del grupo.
+
 Corre en **Cloudflare Workers** (plan gratis) con una base **D1**. El diseño completo está en `docs/specs/2026-09-24-resumen-diario-design.md`.
 
 > **Importante:** hacer push a `main` **no** deploya. El bot que está corriendo cambia recién cuando corrés `npx wrangler deploy`.

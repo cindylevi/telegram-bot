@@ -4,12 +4,12 @@ import { buildDetail } from "./detail";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import { loadResults, saveResult } from "./store";
 import { buildSummary } from "./summary";
-import { sendMessage, type TelegramUpdate } from "./telegram";
+import { isChatMember, sendMessage, type TelegramUpdate } from "./telegram";
 
 const SUMMARY_COMMAND = /^\/resumen(@\w+)?(\s|$)/i;
 const LIST_COMMAND = /^\/listdles(@\w+)?(\s|$)/i;
 const DETAIL_COMMAND = /^\/([a-z0-9]+)detalle(@\w+)?(\s|$)/i;
-const HELP_COMMAND = /^\/help(@\w+)?(\s|$)/i;
+const HELP_COMMAND = /^\/(help|start)(@\w+)?(\s|$)/i;
 
 const HELP = [
   "🤖 Comandos",
@@ -22,6 +22,7 @@ const HELP = [
   ...GAMES.map((game) => `/${commandName(game)}detalle — ${game.emoji} ${game.name}`),
   "",
   "Pegá tu resultado en el grupo y lo guardo solo. El resumen sale todos los días a las 23:58.",
+  "Los comandos también andan por privado.",
 ].join("\n");
 
 async function postSummary(env: Env, day: string): Promise<boolean> {
@@ -44,7 +45,8 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     );
     return;
   }
-  if (String(message.chat.id) !== env.GROUP_CHAT_ID) {
+  const isPrivate = message.chat.type === "private";
+  if (!isPrivate && String(message.chat.id) !== env.GROUP_CHAT_ID) {
     const origin = message.migrate_from_chat_id ? ` (migrado desde ${message.migrate_from_chat_id})` : "";
     console.warn(`mensaje de un chat desconocido: ${message.chat.id}${origin}`);
     return;
@@ -52,30 +54,42 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   if (!message.text || !message.from || message.from.is_bot) return;
 
   const day = dayInArgentina(message.date);
+  const groupId = Number(env.GROUP_CHAT_ID);
+  // Siempre se responde en el chat desde donde se pidió; los datos son siempre los del grupo.
+  const reply = (text: string) => sendMessage(env.BOT_TOKEN, message.chat.id, text);
+
+  // Cualquiera puede escribirle al bot: por privado solo atiende a los miembros del grupo.
+  if (isPrivate && !(await isChatMember(env.BOT_TOKEN, groupId, message.from.id))) {
+    await reply("Este bot es solo para los miembros del grupo.");
+    return;
+  }
 
   if (SUMMARY_COMMAND.test(message.text)) {
-    const sent = await postSummary(env, day);
-    if (!sent) await sendMessage(env.BOT_TOKEN, message.chat.id, "Hoy todavía no jugó nadie.");
+    const summary = buildSummary(await loadResults(env.DB, groupId), day);
+    await reply(summary ?? "Hoy todavía no jugó nadie.");
     return;
   }
 
   if (HELP_COMMAND.test(message.text)) {
-    await sendMessage(env.BOT_TOKEN, message.chat.id, HELP);
+    await reply(HELP);
     return;
   }
 
   if (LIST_COMMAND.test(message.text)) {
-    await sendMessage(env.BOT_TOKEN, message.chat.id, listGames());
+    await reply(listGames());
     return;
   }
 
   const detail = message.text.match(DETAIL_COMMAND);
   if (detail) {
     const game = gameByCommand(detail[1]);
-    if (game) {
-      const rows = await loadResults(env.DB, message.chat.id);
-      await sendMessage(env.BOT_TOKEN, message.chat.id, buildDetail(rows, game, day));
-    }
+    if (game) await reply(buildDetail(await loadResults(env.DB, groupId), game, day));
+    return;
+  }
+
+  // Los resultados solo cuentan si se mandan en el grupo, a la vista de todos.
+  if (isPrivate) {
+    if (parseResults(message.text).length > 0) await reply("Los resultados mandalos en el grupo así cuentan 😉");
     return;
   }
 

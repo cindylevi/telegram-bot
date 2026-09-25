@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GAMES, parseResults } from "../src/games";
+import { GAMES, listGames, parseResults } from "../src/games";
 
 const single = (text: string) => {
   const matches = parseResults(text);
@@ -48,5 +48,17 @@ describe("parseResults", () => {
     expect(single("hoy saqué 4/6 en el boludle")).toBeNull();
     expect(single("pasen el link de catfishing.net")).toBeNull();
     expect(single("che, size it up hoy: Overall Score 3 jaja")).toBeNull();
+  });
+});
+
+describe("listGames", () => {
+  it("lista cada juego con su emoji y su link", () => {
+    const lines = listGames().split("\n");
+    expect(lines[0]).toBe(`🎮 Juegos que reconozco (${GAMES.length})`);
+    expect(lines[1]).toBe("");
+    expect(lines.slice(2)).toHaveLength(GAMES.length);
+    expect(lines).toContain("🟦 4x3 — https://4x3.fun");
+    expect(lines).toContain("🦐 Krillion — https://krillion.io");
+    for (const line of lines.slice(2)) expect(line).toMatch(/ — https:\/\/\S+$/);
   });
 });

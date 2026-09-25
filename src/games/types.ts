@@ -10,6 +10,7 @@ export interface Game {
   id: string;
   name: string;
   emoji: string;
+  url: string;
   direction: Direction;
   parse(text: string): ParsedResult | null;
 }

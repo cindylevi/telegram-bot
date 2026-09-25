@@ -5,6 +5,7 @@ export const trivia: Game = {
   id: "trivia",
   name: "La Trivia del Día",
   emoji: "🎓",
+  url: "https://latriviadeldia.com",
   direction: "higher",
   parse(text) {
     const match = text.match(

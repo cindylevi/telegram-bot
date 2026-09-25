@@ -143,6 +143,15 @@ describe("/resumen", () => {
   });
 });
 
+describe("/listdles", () => {
+  it("responde con la lista de juegos", async () => {
+    await post({ update_id: 1, message: message({ text: "/listdles@StatsReseteoBot" }) });
+    expect(sentTexts()).toHaveLength(1);
+    expect(sentTexts()[0]).toMatch(/^🎮 Juegos que reconozco/);
+    expect(await storedRows()).toHaveLength(0);
+  });
+});
+
 describe("cron", () => {
   async function runCron() {
     // 02:58 UTC del 25/09 = 23:58 del 24/09 en Argentina

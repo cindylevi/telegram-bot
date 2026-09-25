@@ -4,6 +4,7 @@ export const metazooa: Game = {
   id: "metazooa",
   name: "Metazooa",
   emoji: "🦫",
+  url: "https://metazooa.com",
   direction: "lower",
   parse(text) {
     if (!/metazooa/i.test(text)) return null;

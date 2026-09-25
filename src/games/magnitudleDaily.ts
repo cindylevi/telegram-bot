@@ -4,6 +4,7 @@ export const magnitudleDaily: Game = {
   id: "magnitudle",
   name: "Magnitudle Daily",
   emoji: "📏",
+  url: "https://magnitudle.com/daily",
   direction: "higher",
   parse(text) {
     const match = text.match(

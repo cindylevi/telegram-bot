@@ -4,6 +4,7 @@ export const pedantle: Game = {
   id: "pedantle",
   name: "Pedantle",
   emoji: "📖",
+  url: "https://pedantle.certitudes.org",
   direction: "lower",
   parse(text) {
     const match = text.match(/#pedantle\s+#(\d+)\s+in\s+(\d+)\s+guess(?:es)?/i);

@@ -10,6 +10,7 @@ export const fourByThree: Game = {
   id: "4x3",
   name: "4x3",
   emoji: "🟦",
+  url: "https://4x3.fun",
   direction: "higher",
   parse(text) {
     if (!/4x3\.fun/i.test(text)) return null;

@@ -1,11 +1,12 @@
 import { dayInArgentina } from "./date";
 import type { Env } from "./env";
-import { parseResults } from "./games";
+import { listGames, parseResults } from "./games";
 import { loadResults, saveResult } from "./store";
 import { buildSummary } from "./summary";
 import { sendMessage, type TelegramUpdate } from "./telegram";
 
 const SUMMARY_COMMAND = /^\/resumen(@\w+)?(\s|$)/i;
+const LIST_COMMAND = /^\/listdles(@\w+)?(\s|$)/i;
 
 async function postSummary(env: Env, day: string): Promise<boolean> {
   const chatId = Number(env.GROUP_CHAT_ID);
@@ -39,6 +40,11 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   if (SUMMARY_COMMAND.test(message.text)) {
     const sent = await postSummary(env, day);
     if (!sent) await sendMessage(env.BOT_TOKEN, message.chat.id, "Hoy todavía no jugó nadie.");
+    return;
+  }
+
+  if (LIST_COMMAND.test(message.text)) {
+    await sendMessage(env.BOT_TOKEN, message.chat.id, listGames());
     return;
   }
 

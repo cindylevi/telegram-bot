@@ -152,6 +152,26 @@ describe("/listdles", () => {
   });
 });
 
+describe("/<juego>detalle", () => {
+  it("responde con el detalle del juego", async () => {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, text: "/boludledetalle@StatsReseteoBot" }) });
+    expect(sentTexts()).toHaveLength(1);
+    expect(sentTexts()[0]).toMatch(/^🧉 Boludle — detalle del 24\/09/);
+    expect(sentTexts()[0]).toContain("🥇 Cindy — 4/6");
+  });
+
+  it("acepta los juegos con guion en el id", async () => {
+    await post({ update_id: 1, message: message({ text: "/minutecrypticdetalle" }) });
+    expect(sentTexts()[0]).toMatch(/^🧩 Minute Cryptic — detalle/);
+  });
+
+  it("ignora un juego que no existe", async () => {
+    await post({ update_id: 1, message: message({ text: "/noexistedetalle" }) });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
 describe("cron", () => {
   async function runCron() {
     // 02:58 UTC del 25/09 = 23:58 del 24/09 en Argentina

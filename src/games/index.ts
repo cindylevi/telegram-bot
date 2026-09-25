@@ -22,8 +22,17 @@ export interface Match {
   result: ParsedResult;
 }
 
+// Telegram no acepta guiones en los comandos: "minute-cryptic" → "minutecryptic".
+export function commandName(game: Game): string {
+  return game.id.replace(/-/g, "");
+}
+
+export function gameByCommand(name: string): Game | undefined {
+  return GAMES.find((game) => commandName(game) === name.toLowerCase());
+}
+
 export function listGames(): string {
-  const lines = GAMES.map((game) => `${game.emoji} ${game.name} — ${game.url}`);
+  const lines = GAMES.map((game) => `${game.emoji} ${game.name} — ${game.url} · /${commandName(game)}detalle`);
   return [`🎮 Juegos que reconozco (${GAMES.length})`, "", ...lines].join("\n");
 }
 

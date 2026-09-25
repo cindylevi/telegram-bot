@@ -11,7 +11,7 @@ export function joinNames(names: string[]): string {
   return `${names.slice(0, -1).join(", ")} y ${names.at(-1)}`;
 }
 
-function people(count: number): string {
+export function people(count: number): string {
   return count === 1 ? "1 persona" : `${count} personas`;
 }
 

@@ -128,3 +128,91 @@ export function historicalRanking(valid: StoredResult[], upToDay: string, size =
   }
   return ranking;
 }
+
+export interface Best {
+  names: string[];
+  display: string;
+  day: string | null; // solo si lo tiene una sola persona
+}
+
+export interface HistoricStreak {
+  names: string[];
+  days: number;
+  from: string | null; // solo si la tiene una sola persona
+  to: string | null;
+}
+
+export interface CurrentStreak {
+  name: string;
+  days: number;
+  pendingToday: boolean; // jugó hasta ayer y todavía no hoy
+}
+
+// Nombre más reciente y días jugados de cada persona en un juego.
+function playersOf(valid: StoredResult[], game: string) {
+  const players = new Map<number, { name: string; latest: number; days: Set<string> }>();
+  for (const row of valid) {
+    if (row.game !== game) continue;
+    const player = players.get(row.userId) ?? { name: row.userName, latest: row.createdAt, days: new Set<string>() };
+    player.days.add(row.day);
+    if (row.createdAt >= player.latest) {
+      player.name = row.userName;
+      player.latest = row.createdAt;
+    }
+    players.set(row.userId, player);
+  }
+  return players;
+}
+
+export function bestEver(valid: StoredResult[], game: string, direction: Direction): Best | null {
+  const gameRows = valid.filter((row) => row.game === game);
+  const [top] = podium(gameRows, direction, 1);
+  if (!top) return null;
+
+  const winners = gameRows
+    .filter((row) => row.score === top.score && row.tiebreak === top.tiebreak)
+    .sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
+  const players = playersOf(valid, game);
+  const userIds = [...new Set(winners.map((row) => row.userId))];
+  return {
+    names: userIds.map((id) => players.get(id)!.name),
+    display: top.display,
+    day: userIds.length === 1 ? winners[0].day : null,
+  };
+}
+
+export function longestStreakEver(valid: StoredResult[], game: string): HistoricStreak | null {
+  let best: { names: string[]; days: number; from: string; to: string } | null = null;
+
+  for (const player of playersOf(valid, game).values()) {
+    const days = [...player.days].sort();
+    let run = { days: 0, from: "", to: "" };
+    let longest = run;
+    for (const day of days) {
+      run = run.days > 0 && previousDay(day) === run.to ? { ...run, days: run.days + 1, to: day } : { days: 1, from: day, to: day };
+      if (run.days > longest.days) longest = run;
+    }
+
+    if (!best || longest.days > best.days) best = { names: [player.name], ...longest };
+    else if (longest.days === best.days) best.names.push(player.name);
+  }
+
+  if (!best || best.days < 2) return null;
+  const single = best.names.length === 1;
+  return { names: best.names, days: best.days, from: single ? best.from : null, to: single ? best.to : null };
+}
+
+export function currentStreaks(valid: StoredResult[], game: string, day: string): CurrentStreak[] {
+  const yesterday = previousDay(day);
+  const streaks: CurrentStreak[] = [];
+
+  for (const player of playersOf(valid, game).values()) {
+    const start = player.days.has(day) ? day : player.days.has(yesterday) ? yesterday : null;
+    if (!start) continue;
+    let days = 0;
+    for (let current = start; player.days.has(current); current = previousDay(current)) days += 1;
+    if (days >= 2) streaks.push({ name: player.name, days, pendingToday: start !== day });
+  }
+
+  return streaks.sort((a, b) => b.days - a.days || Number(a.pendingToday) - Number(b.pendingToday));
+}

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   average,
+  bestEver,
   comparePuzzles,
+  currentStreaks,
+  longestStreakEver,
   historicalRanking,
   longestCurrentStreak,
   podium,
@@ -172,5 +175,78 @@ describe("historicalRanking", () => {
       result({ userId: 2, game: "poople", day: D }),
     ];
     expect(historicalRanking(rows, D, 1)).toEqual([{ names: ["U2"], games: 2 }]);
+  });
+});
+
+describe("bestEver", () => {
+  it("devuelve el mejor puntaje de la historia con su día", () => {
+    const rows = [
+      result({ userId: 1, userName: "Ana", game: "boludle", day: "2026-09-21", score: 2, display: "2/6" }),
+      result({ userId: 2, userName: "Juan", game: "boludle", day: D, score: 4, display: "4/6" }),
+      result({ userId: 1, userName: "Ana", game: "boludle", day: D, score: 2, display: "2/6" }),
+    ];
+    expect(bestEver(rows, "boludle", "lower")).toEqual({ names: ["Ana"], display: "2/6", day: "2026-09-21" });
+  });
+
+  it("en empate lista a todos sin día y usa el desempate", () => {
+    const rows = [
+      result({ userId: 1, userName: "Ana", game: "mc", day: "2026-09-21", score: 0, display: "0", tiebreak: 100 }),
+      result({ userId: 2, userName: "Juan", game: "mc", day: D, score: 0, display: "0", tiebreak: 100 }),
+      result({ userId: 3, userName: "Lu", game: "mc", day: D, score: 0, display: "0", tiebreak: 200 }),
+    ];
+    expect(bestEver(rows, "mc", "lower")).toEqual({ names: ["Ana", "Juan"], display: "0", day: null });
+  });
+
+  it("devuelve null si nadie lo resolvió nunca", () => {
+    const rows = [result({ userId: 1, game: "boludle", day: D, score: null, display: "X/6" })];
+    expect(bestEver(rows, "boludle", "lower")).toBeNull();
+  });
+});
+
+describe("longestStreakEver", () => {
+  const played = (userId: number, userName: string, day: string) => result({ userId, userName, game: "boludle", day });
+
+  it("encuentra la racha más larga aunque ya se haya cortado", () => {
+    const rows = [
+      played(1, "Ana", "2026-09-19"),
+      played(1, "Ana", "2026-09-20"),
+      played(1, "Ana", "2026-09-21"),
+      played(2, "Juan", "2026-09-23"),
+      played(2, "Juan", D),
+      played(1, "Ana", D),
+    ];
+    expect(longestStreakEver(rows, "boludle")).toEqual({
+      names: ["Ana"],
+      days: 3,
+      from: "2026-09-19",
+      to: "2026-09-21",
+    });
+  });
+
+  it("en empate lista a todos sin fechas y no muestra rachas de 1", () => {
+    const tie = [played(1, "Ana", "2026-09-20"), played(1, "Ana", "2026-09-21"), played(2, "Juan", "2026-09-23"), played(2, "Juan", D)];
+    expect(longestStreakEver(tie, "boludle")).toEqual({ names: ["Ana", "Juan"], days: 2, from: null, to: null });
+    expect(longestStreakEver([played(1, "Ana", D)], "boludle")).toBeNull();
+  });
+});
+
+describe("currentStreaks", () => {
+  const played = (userId: number, userName: string, day: string) => result({ userId, userName, game: "boludle", day });
+
+  it("incluye las de hoy y las que siguen vivas desde ayer, de 2 días o más", () => {
+    const rows = [
+      played(1, "Cindy", "2026-09-22"),
+      played(1, "Cindy", "2026-09-23"),
+      played(2, "Juan", "2026-09-22"),
+      played(2, "Juan", "2026-09-23"),
+      played(2, "Juan", D),
+      played(3, "Ana", "2026-09-21"),
+      played(3, "Ana", "2026-09-22"),
+      played(4, "Lu", D),
+    ];
+    expect(currentStreaks(rows, "boludle", D)).toEqual([
+      { name: "Juan", days: 3, pendingToday: false },
+      { name: "Cindy", days: 2, pendingToday: true },
+    ]);
   });
 });

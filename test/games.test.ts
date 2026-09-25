@@ -57,9 +57,9 @@ describe("listGames", () => {
     expect(lines[0]).toBe(`🎮 Juegos que reconozco (${GAMES.length})`);
     expect(lines[1]).toBe("");
     expect(lines.slice(2)).toHaveLength(GAMES.length);
-    expect(lines).toContain("🟦 4x3 — https://4x3.fun");
-    expect(lines).toContain("🦐 Krillion — https://krillion.io");
-    expect(lines).toContain("🧩 Minute Cryptic — https://www.minutecryptic.com");
-    for (const line of lines.slice(2)) expect(line).toMatch(/ — https:\/\/\S+$/);
+    expect(lines).toContain("🟦 4x3 — https://4x3.fun · /4x3detalle");
+    expect(lines).toContain("🦐 Krillion — https://krillion.io · /krilliondetalle");
+    expect(lines).toContain("🧩 Minute Cryptic — https://www.minutecryptic.com · /minutecrypticdetalle");
+    for (const line of lines.slice(2)) expect(line).toMatch(/ — https:\/\/\S+ · \/[a-z0-9]+detalle$/);
   });
 });

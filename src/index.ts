@@ -1,12 +1,14 @@
 import { dayInArgentina } from "./date";
 import type { Env } from "./env";
-import { listGames, parseResults } from "./games";
+import { buildDetail } from "./detail";
+import { gameByCommand, listGames, parseResults } from "./games";
 import { loadResults, saveResult } from "./store";
 import { buildSummary } from "./summary";
 import { sendMessage, type TelegramUpdate } from "./telegram";
 
 const SUMMARY_COMMAND = /^\/resumen(@\w+)?(\s|$)/i;
 const LIST_COMMAND = /^\/listdles(@\w+)?(\s|$)/i;
+const DETAIL_COMMAND = /^\/([a-z0-9]+)detalle(@\w+)?(\s|$)/i;
 
 async function postSummary(env: Env, day: string): Promise<boolean> {
   const chatId = Number(env.GROUP_CHAT_ID);
@@ -45,6 +47,16 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
 
   if (LIST_COMMAND.test(message.text)) {
     await sendMessage(env.BOT_TOKEN, message.chat.id, listGames());
+    return;
+  }
+
+  const detail = message.text.match(DETAIL_COMMAND);
+  if (detail) {
+    const game = gameByCommand(detail[1]);
+    if (game) {
+      const rows = await loadResults(env.DB, message.chat.id);
+      await sendMessage(env.BOT_TOKEN, message.chat.id, buildDetail(rows, game, day));
+    }
     return;
   }
 

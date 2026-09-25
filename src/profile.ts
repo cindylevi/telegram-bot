@@ -87,8 +87,8 @@ export function buildProfile(rows: StoredResult[], player: Player, day: string, 
   } else {
     const done = played.map((game) => `${game.emoji} ${game.name} ${today.find((row) => row.game === game.id)!.display}`);
     lines.push(`✅ ${self ? "Ya jugaste" : "Ya jugó"}: ${done.length > 0 ? done.join(" · ") : "ninguno todavía"}`);
-    const pending = missing.map((game) => `${game.emoji} ${game.name}`).join(", ");
-    lines.push(`⏳ ${self ? "Te faltan" : "Le faltan"} (${missing.length}): ${pending}`);
+    lines.push(`⏳ ${self ? "Te faltan" : "Le faltan"} (${missing.length}):`);
+    for (const game of missing) lines.push(`   ${game.emoji} ${game.name} — ${game.url}`);
   }
 
   return lines.join("\n");

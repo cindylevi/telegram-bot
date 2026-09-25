@@ -48,7 +48,7 @@ describe("buildProfile", () => {
     play(2, "Rafa", "4x3", D, 150, "150"),
   ];
   const cindy = { userId: 1, name: "Cindy" };
-  const missing = GAMES.filter((g) => g.id !== "boludle" && g.id !== "4x3").map((g) => `${g.emoji} ${g.name}`);
+  const missing = GAMES.filter((g) => g.id !== "boludle" && g.id !== "4x3").map((g) => `   ${g.emoji} ${g.name} — ${g.url}`);
 
   it("arma el detalle propio con partidas, oros, récords y lo que falta hoy", () => {
     expect(buildProfile(rows, cindy, D, true)).toBe(
@@ -65,7 +65,8 @@ describe("buildProfile", () => {
         "",
         "📌 Hoy",
         "✅ Ya jugaste: 🟦 4x3 161 · 🧉 Boludle 4/6",
-        `⏳ Te faltan (${missing.length}): ${missing.join(", ")}`,
+        `⏳ Te faltan (${missing.length}):`,
+        ...missing,
       ].join("\n"),
     );
   });
@@ -74,7 +75,7 @@ describe("buildProfile", () => {
     const text = buildProfile(rows, cindy, D, false);
     expect(text).toContain("📅 Jugó 3 días (desde el 22/09)");
     expect(text).toContain("✅ Ya jugó: ");
-    expect(text).toContain(`⏳ Le faltan (${missing.length}): `);
+    expect(text).toContain(`⏳ Le faltan (${missing.length}):\n${missing[0]}`);
   });
 
   it("cuenta como viva la racha de ayer y muestra el récord aunque se haya cortado", () => {

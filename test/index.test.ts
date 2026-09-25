@@ -1,6 +1,7 @@
 import { createScheduledController, env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import type { Env } from "../src/env";
+import { commandName, GAMES } from "../src/games";
 import worker from "../src/index";
 import type { TelegramMessage, TelegramUpdate } from "../src/telegram";
 import { FIXTURES } from "./fixtures/games";
@@ -176,8 +177,12 @@ describe("/help", () => {
   it("lista todos los comandos", async () => {
     await post({ update_id: 1, message: message({ text: "/help@StatsReseteoBot" }) });
     expect(sentTexts()).toHaveLength(1);
-    for (const command of ["/resumen", "/listdles", "/foximaxdetalle", "/help"]) {
+    const lines = sentTexts()[0].split("\n");
+    for (const command of ["/resumen", "/listdles", "/help"]) {
       expect(sentTexts()[0]).toContain(command);
+    }
+    for (const game of GAMES) {
+      expect(lines).toContain(`/${commandName(game)}detalle — ${game.emoji} ${game.name}`);
     }
   });
 });

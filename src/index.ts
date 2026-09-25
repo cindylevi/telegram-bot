@@ -1,7 +1,7 @@
 import { dayInArgentina } from "./date";
 import type { Env } from "./env";
 import { buildDetail } from "./detail";
-import { gameByCommand, listGames, parseResults } from "./games";
+import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import { loadResults, saveResult } from "./store";
 import { buildSummary } from "./summary";
 import { sendMessage, type TelegramUpdate } from "./telegram";
@@ -16,8 +16,10 @@ const HELP = [
   "",
   "/resumen — el resumen de hoy hasta ahora",
   "/listdles — los juegos que reconozco, con su link",
-  "/<juego>detalle — ranking de hoy, récords y rachas de un juego (ej. /foximaxdetalle)",
   "/help — esta ayuda",
+  "",
+  "📊 Detalle de cada juego (ranking de hoy, récords y rachas)",
+  ...GAMES.map((game) => `/${commandName(game)}detalle — ${game.emoji} ${game.name}`),
   "",
   "Pegá tu resultado en el grupo y lo guardo solo. El resumen sale todos los días a las 23:58.",
 ].join("\n");

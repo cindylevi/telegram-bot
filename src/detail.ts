@@ -1,6 +1,6 @@
 import { shortDay } from "./date";
 import type { Game } from "./games/types";
-import { average, bestEver, currentStreaks, longestStreakEver, podium, validResults } from "./stats";
+import { average, bestEver, currentStreaks, goldMedals, longestStreakEver, podium, validResults } from "./stats";
 import type { StoredResult } from "./store";
 import { joinNames, people } from "./summary";
 
@@ -35,6 +35,14 @@ export function buildDetail(rows: StoredResult[], game: Game, day: string): stri
   if (record) {
     const range = record.from && record.to ? ` (del ${shortDay(record.from)} al ${shortDay(record.to)})` : "";
     lines.push(`🔥 Racha histórica: ${joinNames(record.names)}, ${record.days} días${range}`);
+  }
+
+  const medals = goldMedals(valid, game.id, game.direction);
+  if (medals.length > 0) {
+    lines.push("", "🏅 Medallero histórico");
+    medals.forEach((entry, i) => {
+      lines.push(`   ${i + 1}. ${joinNames(entry.names)} (${entry.golds === 1 ? "1 oro" : `${entry.golds} oros`})`);
+    });
   }
 
   const streaks = currentStreaks(valid, game.id, day);

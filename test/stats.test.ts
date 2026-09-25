@@ -4,6 +4,7 @@ import {
   bestEver,
   comparePuzzles,
   currentStreaks,
+  goldMedals,
   longestStreakEver,
   historicalRanking,
   longestCurrentStreak,
@@ -248,5 +249,31 @@ describe("currentStreaks", () => {
       { name: "Juan", days: 3, pendingToday: false },
       { name: "Cindy", days: 2, pendingToday: true },
     ]);
+  });
+});
+
+describe("goldMedals", () => {
+  const play = (userId: number, userName: string, day: string, score: number | null) =>
+    result({ userId, userName, game: "boludle", day, score });
+
+  it("cuenta los primeros puestos de cada día, con empates que suman oro a todos", () => {
+    const rows = [
+      play(1, "Rafa", "2026-09-22", 2),
+      play(2, "Cindy", "2026-09-22", 3),
+      play(1, "Rafa", "2026-09-23", 3),
+      play(2, "Cindy", "2026-09-23", 3),
+      play(1, "Rafa", D, 4),
+      play(2, "Cindy", D, 5),
+      play(3, "Valen", D, null),
+      play(3, "Valen", "2026-09-21", 1),
+    ];
+    expect(goldMedals(rows, "boludle", "lower")).toEqual([
+      { names: ["Rafa"], golds: 3 },
+      { names: ["Cindy", "Valen"], golds: 1 },
+    ]);
+  });
+
+  it("un día donde nadie lo resolvió no reparte oro", () => {
+    expect(goldMedals([play(1, "Rafa", D, null)], "boludle", "lower")).toEqual([]);
   });
 });

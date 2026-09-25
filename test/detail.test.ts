@@ -41,6 +41,11 @@ describe("buildDetail", () => {
         "🏆 Mejor puntaje histórico: Ana — 2/6 (21/09)",
         "🔥 Racha histórica: Ana, 4 días (del 19/09 al 22/09)",
         "",
+        "🏅 Medallero histórico",
+        "   1. Ana (4 oros)",
+        "   2. Juan y Cindy (2 oros)",
+        "   3. Lu (1 oro)",
+        "",
         "📈 Rachas actuales",
         "   Juan — 3 días",
         "   Cindy — 2 días (le falta jugar hoy)",
@@ -57,6 +62,9 @@ describe("buildDetail", () => {
         "Hoy todavía no jugó nadie.",
         "",
         "🏆 Mejor puntaje histórico: Ana — 2/6 (22/09)",
+        "",
+        "🏅 Medallero histórico",
+        "   1. Ana (1 oro)",
       ].join("\n"),
     );
   });

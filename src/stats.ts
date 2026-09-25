@@ -216,3 +216,35 @@ export function currentStreaks(valid: StoredResult[], game: string, day: string)
 
   return streaks.sort((a, b) => b.days - a.days || Number(a.pendingToday) - Number(b.pendingToday));
 }
+
+export interface MedalEntry {
+  names: string[];
+  golds: number;
+}
+
+// Primeros puestos de cada día en un juego; un empate en el primero le da oro a todos los empatados.
+export function goldMedals(valid: StoredResult[], game: string, direction: Direction): MedalEntry[] {
+  const gameRows = valid.filter((row) => row.game === game);
+  const golds = new Map<number, number>();
+  for (const player of playersOf(valid, game).keys()) golds.set(player, 0);
+
+  for (const day of new Set(gameRows.map((row) => row.day))) {
+    const dayRows = gameRows.filter((row) => row.day === day);
+    const [top] = podium(dayRows, direction, 1);
+    if (!top) continue;
+    const winners = new Set(
+      dayRows.filter((row) => row.score === top.score && row.tiebreak === top.tiebreak).map((row) => row.userId),
+    );
+    for (const userId of winners) golds.set(userId, golds.get(userId)! + 1);
+  }
+
+  const players = playersOf(valid, game);
+  const sorted = [...golds].filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
+  const medals: MedalEntry[] = [];
+  for (const [userId, count] of sorted) {
+    const last = medals.at(-1);
+    if (last && last.golds === count) last.names.push(players.get(userId)!.name);
+    else medals.push({ names: [players.get(userId)!.name], golds: count });
+  }
+  return medals;
+}

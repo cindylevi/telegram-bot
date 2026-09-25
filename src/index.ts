@@ -61,6 +61,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       display: match.result.display,
       day,
       createdAt: message.date,
+      tiebreak: match.result.tiebreak ?? null,
     });
   }
 }

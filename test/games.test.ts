@@ -59,6 +59,7 @@ describe("listGames", () => {
     expect(lines.slice(2)).toHaveLength(GAMES.length);
     expect(lines).toContain("🟦 4x3 — https://4x3.fun");
     expect(lines).toContain("🦐 Krillion — https://krillion.io");
+    expect(lines).toContain("🧩 Minute Cryptic — https://www.minutecryptic.com");
     for (const line of lines.slice(2)) expect(line).toMatch(/ — https:\/\/\S+$/);
   });
 });

@@ -7,6 +7,7 @@ export interface StoredResult {
   display: string;
   day: string;
   createdAt: number;
+  tiebreak: number | null;
 }
 
 export interface NewResult extends StoredResult {
@@ -23,14 +24,15 @@ interface Row {
   display: string;
   day: string;
   created_at: number;
+  tiebreak: number | null;
 }
 
 export async function saveResult(db: D1Database, result: NewResult): Promise<void> {
   await db
     .prepare(
       `INSERT OR IGNORE INTO results
-         (chat_id, user_id, user_name, game, puzzle, score, display, day, message_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (chat_id, user_id, user_name, game, puzzle, score, display, day, message_id, created_at, tiebreak)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       result.chatId,
@@ -43,6 +45,7 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<voi
       result.day,
       result.messageId,
       result.createdAt,
+      result.tiebreak,
     )
     .run();
 }
@@ -50,7 +53,7 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<voi
 export async function loadResults(db: D1Database, chatId: number): Promise<StoredResult[]> {
   const { results } = await db
     .prepare(
-      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at
+      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak
        FROM results WHERE chat_id = ? ORDER BY created_at, id`,
     )
     .bind(chatId)
@@ -64,5 +67,6 @@ export async function loadResults(db: D1Database, chatId: number): Promise<Store
     display: row.display,
     day: row.day,
     createdAt: row.created_at,
+    tiebreak: row.tiebreak,
   }));
 }

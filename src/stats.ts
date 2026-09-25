@@ -4,6 +4,7 @@ import type { StoredResult } from "./store";
 
 export interface Placement {
   score: number;
+  tiebreak: number | null;
   names: string[];
   display: string;
 }
@@ -46,20 +47,28 @@ export function validResults(rows: StoredResult[]): StoredResult[] {
   return rows.filter((row) => mainPuzzle.get(`${row.game}|${row.day}`) === row.puzzle);
 }
 
+// Menor tiebreak gana; sin tiebreak va después de los que lo tienen.
+function compareTiebreaks(a: StoredResult, b: StoredResult): number {
+  if (a.tiebreak === b.tiebreak) return 0;
+  if (a.tiebreak === null) return 1;
+  if (b.tiebreak === null) return -1;
+  return a.tiebreak - b.tiebreak;
+}
+
 export function podium(rows: StoredResult[], direction: Direction, size: number): Placement[] {
   const solved = rows
     .filter((row): row is StoredResult & { score: number } => row.score !== null)
-    .sort((a, b) => (direction === "higher" ? b.score - a.score : a.score - b.score));
+    .sort((a, b) => (direction === "higher" ? b.score - a.score : a.score - b.score) || compareTiebreaks(a, b));
 
   const placements: Placement[] = [];
   for (const row of solved) {
     const last = placements.at(-1);
-    if (last && last.score === row.score) {
+    if (last && last.score === row.score && last.tiebreak === row.tiebreak) {
       last.names.push(row.userName);
       continue;
     }
     if (placements.length === size) break;
-    placements.push({ score: row.score, names: [row.userName], display: row.display });
+    placements.push({ score: row.score, tiebreak: row.tiebreak, names: [row.userName], display: row.display });
   }
   return placements;
 }

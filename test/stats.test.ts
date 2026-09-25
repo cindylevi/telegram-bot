@@ -54,8 +54,8 @@ describe("podium", () => {
       result({ userId: 2, userName: "Cindy", game: "4x3", day: D, score: 161, display: "161" }),
     ];
     expect(podium(rows, "higher", 3)).toEqual([
-      { score: 161, names: ["Cindy"], display: "161" },
-      { score: 140, names: ["Ana"], display: "140" },
+      { score: 161, tiebreak: null, names: ["Cindy"], display: "161" },
+      { score: 140, tiebreak: null, names: ["Ana"], display: "140" },
     ]);
   });
 
@@ -66,9 +66,19 @@ describe("podium", () => {
       result({ userId: 3, userName: "Lu", game: "boludle", day: D, score: 4, display: "4/6" }),
     ];
     expect(podium(rows, "lower", 3)).toEqual([
-      { score: 4, names: ["Juan", "Lu"], display: "4/6" },
-      { score: 5, names: ["Ana"], display: "5/6" },
+      { score: 4, tiebreak: null, names: ["Juan", "Lu"], display: "4/6" },
+      { score: 5, tiebreak: null, names: ["Ana"], display: "5/6" },
     ]);
+  });
+
+  it("con el mismo puntaje desempata por tiebreak (menor gana) y sin tiebreak va atrás", () => {
+    const rows = [
+      result({ userId: 1, userName: "SinTiempo", game: "mc", day: D, score: 0, display: "0", tiebreak: null }),
+      result({ userId: 2, userName: "Lento", game: "mc", day: D, score: 0, display: "0", tiebreak: 900 }),
+      result({ userId: 3, userName: "Rapido", game: "mc", day: D, score: 0, display: "0", tiebreak: 300 }),
+      result({ userId: 4, userName: "Empate", game: "mc", day: D, score: 0, display: "0", tiebreak: 300 }),
+    ];
+    expect(podium(rows, "lower", 3).map((p) => p.names)).toEqual([["Rapido", "Empate"], ["Lento"], ["SinTiempo"]]);
   });
 
   it("deja afuera los fails y respeta el tamaño", () => {

@@ -5,6 +5,7 @@ import { foxiMax } from "./foxiMax";
 import { krillion } from "./krillion";
 import { magnitudleDaily } from "./magnitudleDaily";
 import { metazooa } from "./metazooa";
+import { minuteCryptic } from "./minuteCryptic";
 import { pedantle } from "./pedantle";
 import { poople } from "./poople";
 import { sizeItUp } from "./sizeItUp";
@@ -13,7 +14,7 @@ import type { Game, ParsedResult } from "./types";
 
 export const GAMES: Game[] = [
   fourByThree, magnitudleDaily, sizeItUp, krillion, foxiMax, trivia,
-  poople, metazooa, boludle, pedantle, catfishing,
+  poople, metazooa, boludle, pedantle, catfishing, minuteCryptic,
 ];
 
 export interface Match {

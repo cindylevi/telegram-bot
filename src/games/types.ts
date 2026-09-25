@@ -4,6 +4,8 @@ export interface ParsedResult {
   puzzle: string | null;
   score: number | null;
   display: string;
+  // Desempate entre puntajes iguales: gana el menor (por ejemplo, segundos). null = sin dato.
+  tiebreak?: number | null;
 }
 
 export interface Game {

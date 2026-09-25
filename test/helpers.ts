@@ -14,6 +14,7 @@ export function result(fields: Required & Partial<StoredResult>): StoredResult {
     score: 1,
     display: "1",
     createdAt: sequence,
+    tiebreak: null,
     ...fields,
   };
 }

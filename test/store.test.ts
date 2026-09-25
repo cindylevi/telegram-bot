@@ -13,6 +13,7 @@ const base: NewResult = {
   display: "4/6",
   day: "2026-09-24",
   createdAt: 1_790_000_000,
+  tiebreak: null,
 };
 
 describe("store", () => {
@@ -28,6 +29,11 @@ describe("store", () => {
     const rows = await loadResults(env.DB, -1001);
     expect(rows).toHaveLength(1);
     expect(rows[0].display).toBe("4/6");
+  });
+
+  it("guarda el desempate", async () => {
+    await saveResult(env.DB, { ...base, tiebreak: 1452 });
+    expect((await loadResults(env.DB, -1001))[0].tiebreak).toBe(1452);
   });
 
   it("guarda los fails con score null", async () => {

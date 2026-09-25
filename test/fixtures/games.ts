@@ -157,4 +157,22 @@ https://pedantle.certitudes.org/`,
 🐈🐟🐈🐈🐈`,
     expected: { puzzle: "818", score: 4.5, display: "4.5/10" },
   },
+  {
+    id: "minute-cryptic",
+    text: `Minute Cryptic - 24 September, 2026
+"The Godfather Part I" (3)
+🟣🟣🟣🟣🟣🟣
+🏆 0 hints – 1 under the community par (141,308 solvers so far).
+https://www.minutecryptic.com/?utm_source=share`,
+    expected: { puzzle: "2026-09-24", score: 0, display: "0 pistas", tiebreak: null },
+  },
+  {
+    id: "minute-cryptic",
+    text: `Minute Cryptic - 23 September, 2026
+"So, what anagram indicator can I ultimately use?" (1,4,4)
+⚪️🟣🟣🟣🟣🟣🟣🟣🟣🟣🟣🟣
+🏆 1 hints – 1 under the community par (154,463 solvers so far). Time: 24m 12s.
+https://www.minutecryptic.com/?utm_source=share`,
+    expected: { puzzle: "2026-09-23", score: 1, display: "1 pista · 24m 12s", tiebreak: 1452 },
+  },
 ];

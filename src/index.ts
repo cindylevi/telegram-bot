@@ -1,4 +1,4 @@
-import { dayInArgentina } from "./date";
+import { dayInArgentina, previousDay } from "./date";
 import type { Env } from "./env";
 import { parseResults } from "./games";
 import { loadResults, saveResult } from "./store";
@@ -76,8 +76,9 @@ export default {
     return new Response("ok");
   },
 
+  // Corre a las 00:00 de Argentina y resume el día que acaba de terminar.
   async scheduled(controller, env) {
-    const day = dayInArgentina(Math.floor(controller.scheduledTime / 1000));
+    const day = previousDay(dayInArgentina(Math.floor(controller.scheduledTime / 1000)));
     await postSummary(env, day);
   },
 } satisfies ExportedHandler<Env>;

@@ -27,3 +27,15 @@ export function shortDay(day: string): string {
 export function isoDate(year: number, month: number, dayOfMonth: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(dayOfMonth).padStart(2, "0")}`;
 }
+
+const MONTHS: Record<string, number> = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+  julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
+};
+
+// Número de mes (1–12) a partir del nombre en inglés o en español.
+export function monthNumber(name: string): number | null {
+  return MONTHS[name.toLowerCase()] ?? null;
+}

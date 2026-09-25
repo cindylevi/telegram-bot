@@ -19,6 +19,28 @@ https://4x3.fun`,
     expected: { puzzle: "2026-09-24", score: 161, display: "161" },
   },
   {
+    id: "4x3",
+    text: `24 de septiembre de 2026
+171 points • No mistakes
+🌟🟪🟪
+🌟🟦🟦
+🌟🟨🟨
+🌟🟩🟩
+https://4x3.fun221:33`,
+    expected: { puzzle: "2026-09-24", score: 171, display: "171" },
+  },
+  {
+    id: "4x3",
+    text: `September 24, 2026
+Out of guesses • 3 mistakes
+🟨🌟🟨
+🟦🌟🟩
+🟦🌟🟪
+🟦🌟🟩
+https://4x3.fun`,
+    expected: { puzzle: "2026-09-24", score: null, display: "X" },
+  },
+  {
     id: "magnitudle",
     text: `Magnitudle — Daily Question S20 · Q02
 

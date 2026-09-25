@@ -1,15 +1,5 @@
-import { isoDate } from "../date";
+import { isoDate, monthNumber } from "../date";
 import type { Game } from "./types";
-
-const MONTHS = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-];
-
-function monthIndex(name: string): number {
-  const normalized = name.toLowerCase();
-  return normalized === "setiembre" ? 8 : MONTHS.indexOf(normalized);
-}
 
 export const trivia: Game = {
   id: "trivia",
@@ -21,8 +11,8 @@ export const trivia: Game = {
       /latriviadeldia\.com[^\n]*\n\s*(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})\s*\n(?:[^\n]*\n){0,2}?\s*(\d+)\s*\/\s*(\d+)[ \t]*(?:\n|$)/i,
     );
     if (!match) return null;
-    const month = monthIndex(match[2]);
-    const puzzle = month >= 0 ? isoDate(Number(match[3]), month + 1, Number(match[1])) : null;
+    const month = monthNumber(match[2]);
+    const puzzle = month ? isoDate(Number(match[3]), month, Number(match[1])) : null;
     return { puzzle, score: Number(match[4]), display: `${match[4]}/${match[5]}` };
   },
 };

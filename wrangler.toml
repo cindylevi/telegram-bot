@@ -4,12 +4,12 @@ compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-GROUP_CHAT_ID = "0"
+GROUP_CHAT_ID = "-1002950901334"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "resumen-juegos"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "f4bd2e19-eab8-4340-93d4-d96fc77b4c07"
 migrations_dir = "migrations"
 
 [triggers]

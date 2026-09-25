@@ -172,6 +172,16 @@ describe("/<juego>detalle", () => {
   });
 });
 
+describe("/help", () => {
+  it("lista todos los comandos", async () => {
+    await post({ update_id: 1, message: message({ text: "/help@StatsReseteoBot" }) });
+    expect(sentTexts()).toHaveLength(1);
+    for (const command of ["/resumen", "/listdles", "/foximaxdetalle", "/help"]) {
+      expect(sentTexts()[0]).toContain(command);
+    }
+  });
+});
+
 describe("cron", () => {
   async function runCron() {
     // 02:58 UTC del 25/09 = 23:58 del 24/09 en Argentina

@@ -9,6 +9,18 @@ import { sendMessage, type TelegramUpdate } from "./telegram";
 const SUMMARY_COMMAND = /^\/resumen(@\w+)?(\s|$)/i;
 const LIST_COMMAND = /^\/listdles(@\w+)?(\s|$)/i;
 const DETAIL_COMMAND = /^\/([a-z0-9]+)detalle(@\w+)?(\s|$)/i;
+const HELP_COMMAND = /^\/help(@\w+)?(\s|$)/i;
+
+const HELP = [
+  "🤖 Comandos",
+  "",
+  "/resumen — el resumen de hoy hasta ahora",
+  "/listdles — los juegos que reconozco, con su link",
+  "/<juego>detalle — ranking de hoy, récords y rachas de un juego (ej. /foximaxdetalle)",
+  "/help — esta ayuda",
+  "",
+  "Pegá tu resultado en el grupo y lo guardo solo. El resumen sale todos los días a las 23:58.",
+].join("\n");
 
 async function postSummary(env: Env, day: string): Promise<boolean> {
   const chatId = Number(env.GROUP_CHAT_ID);
@@ -42,6 +54,11 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   if (SUMMARY_COMMAND.test(message.text)) {
     const sent = await postSummary(env, day);
     if (!sent) await sendMessage(env.BOT_TOKEN, message.chat.id, "Hoy todavía no jugó nadie.");
+    return;
+  }
+
+  if (HELP_COMMAND.test(message.text)) {
+    await sendMessage(env.BOT_TOKEN, message.chat.id, HELP);
     return;
   }
 

@@ -187,6 +187,7 @@ Los juegos se ordenan por cantidad de jugadores (de más a menos).
 
 ## Comandos
 
+- `/help`: la lista de comandos.
 - `/resumen`: el resumen del día hasta ese momento.
 - `/listdles`: los juegos reconocidos, con su link y su comando de detalle.
 - `/<juego>detalle` (ej. `/foximaxdetalle`, `/minutecrypticdetalle`; el id sin guiones): todos los que jugaron hoy ordenados (medalla a los 3 primeros, del 4.º en adelante numerados, fails al final con ✖️), el mejor puntaje histórico (con fecha si es de una sola persona), la racha histórica más larga (con rango si es de una sola persona) y las rachas actuales de 2 días o más. A diferencia del resumen, una racha de quien jugó ayer y todavía no hoy se muestra como viva, marcada "(le falta jugar hoy)".

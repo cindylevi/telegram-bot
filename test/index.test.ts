@@ -145,20 +145,12 @@ describe("/resumen", () => {
 
 describe("cron", () => {
   async function runCron() {
-    // 03:00 UTC del 25/09 = 00:00 del 25/09 en Argentina: resume el 24/09
+    // 02:58 UTC del 25/09 = 23:58 del 24/09 en Argentina
     await worker.scheduled(
-      createScheduledController({ scheduledTime: Date.UTC(2026, 8, 25, 3, 0), cron: "0 3 * * *" }),
+      createScheduledController({ scheduledTime: Date.UTC(2026, 8, 25, 2, 58), cron: "58 2 * * *" }),
       testEnv,
     );
   }
-
-  it("manda el resumen del día que terminó, incluido lo del último minuto", async () => {
-    // 23:59:30 del 24/09 en Argentina
-    await post({ update_id: 0, message: message({ date: Date.UTC(2026, 8, 25, 2, 59, 30) / 1000 }) });
-    await runCron();
-    expect(sentTexts()[0]).toContain("📊 Resumen del 24/09");
-    expect(sentTexts()[0]).toContain("🧉 Boludle — 1 persona");
-  });
 
   it("manda el resumen del día que termina", async () => {
     await post({ update_id: 1, message: message() });

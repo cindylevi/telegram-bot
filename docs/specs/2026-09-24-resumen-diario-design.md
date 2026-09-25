@@ -9,7 +9,7 @@ En un grupo de Telegram cada persona pega el resultado de sus juegos diarios (4x
 **Criterios de éxito:**
 
 - Todos los formatos listados en [Juegos soportados](#juegos-soportados) se reconocen con sus ejemplos reales.
-- El resumen del día sale todos los días a las 00:00 (hora de Argentina) sin intervención manual.
+- El resumen del día sale todos los días a las 23:58 (hora de Argentina) sin intervención manual.
 - Corre gratis y sin depender de una máquina personal.
 - Los mensajes que no son resultados se ignoran sin responder nada.
 
@@ -133,7 +133,7 @@ El `UNIQUE` + `INSERT OR IGNORE` implementa "vale el primero".
 
 ## Resumen
 
-**Disparo:** cron `0 3 * * *` (UTC) = 00:00 en Argentina (UTC-3, sin horario de verano). Resume el día que acaba de terminar, así entran también los resultados del último minuto. También se dispara a mano con `/resumen`.
+**Disparo:** cron `58 2 * * *` (UTC) = 23:58 en Argentina (UTC-3, sin horario de verano). Resume el día en curso; lo que llegue entre las 23:58 y las 23:59:59 no sale en el resumen, pero cuenta para rachas y ranking. También se dispara a mano con `/resumen`.
 
 **Resultados válidos** (base de todo lo que sigue): para cada par (juego, día) se queda solo el puzzle con más resultados; si empatan, el de mayor número o fecha más reciente. El resto (puzzles de archivo) se descarta.
 
@@ -188,7 +188,7 @@ Los juegos se ordenan por cantidad de jugadores (de más a menos).
 ## Errores y observabilidad
 
 - Un error en el webhook se loguea con `console.error` y se responde 200.
-- Si falla el `sendMessage` del cron, se loguea; no hay reintento. Como corre a las 00:00, `/resumen` ya muestra el día nuevo: un resumen perdido no se recupera desde el chat.
+- Si falla el `sendMessage` del cron, se loguea; no hay reintento; hasta las 23:59 se puede pedir con `/resumen`.
 - Los logs se miran con `wrangler tail`.
 - **Migración a supergrupo:** Telegram le cambia el id al grupo (por ejemplo al hacer visible el historial para nuevos miembros). El bot loguea un `console.warn` con el id nuevo y el SQL a correr: `UPDATE results SET chat_id = <nuevo> WHERE chat_id = <viejo>`. Después hay que actualizar `GROUP_CHAT_ID` y redeployar. Para evitarlo, conviene que el grupo ya sea supergrupo (id `-100…`) antes de configurar el bot.
 - **Varios resultados en un mensaje:** se guarda uno por juego; cada parser lee solo su propio bloque.

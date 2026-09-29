@@ -60,6 +60,8 @@ describe("listGames", () => {
     expect(lines).toContain("🟦 4x3 — https://4x3.fun · /4x3detalle");
     expect(lines).toContain("🦐 Krillion — https://krillion.io · /krilliondetalle");
     expect(lines).toContain("🧩 Minute Cryptic — https://www.minutecryptic.com · /minutecrypticdetalle");
+    expect(lines).toContain("🗺️ MapTap — https://www.maptap.gg · /maptapdetalle");
+    expect(lines).toContain("🔗 Chainle — https://chainle.io · /chainledetalle");
     for (const line of lines.slice(2)) expect(line).toMatch(/ — https:\/\/\S+ · \/[a-z0-9]+detalle$/);
   });
 });

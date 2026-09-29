@@ -175,4 +175,22 @@ https://www.minutecryptic.com/?utm_source=share`,
 https://www.minutecryptic.com/?utm_source=share`,
     expected: { puzzle: "2026-09-23", score: 1, display: "1 pista · 24m 12s", tiebreak: 1452 },
   },
+  {
+    id: "maptap",
+    text: `www.maptap.gg September 29
+87🎓 92🏆 92🏆 82🌟 88🎉
+Final score: 873`,
+    expected: { puzzle: "09-29", score: 873, display: "873" },
+  },
+  {
+    id: "chainle",
+    text: `Chainle #41
+3,595/5,000
+🔗🔗▫️▫️▫️
+🔗🔗▫️▫️▫️
+🔗🔗🔗🔗🔗
+🔗🔗▫️▫️▫️
+🔗🔗🔗🔗🔗`,
+    expected: { puzzle: "41", score: 3595, display: "3,595/5,000" },
+  },
 ];

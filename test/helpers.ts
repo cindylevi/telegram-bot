@@ -15,6 +15,7 @@ export function result(fields: Required & Partial<StoredResult>): StoredResult {
     display: "1",
     createdAt: sequence,
     tiebreak: null,
+    pattern: null,
     ...fields,
   };
 }

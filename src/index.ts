@@ -18,7 +18,7 @@ const HELP = [
   "",
   "/resumen — el resumen de hoy hasta ahora",
   "/listdles — los juegos que reconozco, con su link",
-  "/detalle <nombre> — partidas, oros, récords y qué le falta jugar hoy a alguien (sin nombre, el tuyo; también respondiendo a un mensaje suyo)",
+  "/detalle <nombre> — partidas, oros, récords, matchi matchi y qué le falta jugar hoy a alguien (sin nombre, el tuyo; también respondiendo a un mensaje suyo)",
   "/help — esta ayuda",
   "",
   "📊 Detalle de cada juego (ranking de hoy, récords y rachas)",
@@ -136,6 +136,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       day,
       createdAt: message.date,
       tiebreak: match.result.tiebreak ?? null,
+      pattern: match.result.pattern ?? "",
     });
   }
 }

@@ -73,6 +73,8 @@ describe("webhook", () => {
     expect(await storedRows()).toEqual([
       { user_id: 42, user_name: "Cindy", game: "boludle", puzzle: "1683", day: "2026-09-24" },
     ]);
+    const { results } = await env.DB.prepare("SELECT pattern FROM results").all();
+    expect(results).toEqual([{ pattern: "⬜🟨⬜⬜🟨\n⬜🟨⬜⬜🟩\n⬜🟨🟩⬜🟩\n🟩🟩🟩🟩🟩" }]);
   });
 
   it("usa el día de envío como puzzle cuando el juego no trae número", async () => {

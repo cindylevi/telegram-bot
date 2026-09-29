@@ -13,7 +13,7 @@ describe("parseResults", () => {
     (_id, _display, fixture) => {
       const match = single(fixture.text);
       expect(match?.game.id).toBe(fixture.id);
-      expect(match?.result).toEqual(fixture.expected);
+      expect(match?.result).toMatchObject(fixture.expected);
     },
   );
 
@@ -32,14 +32,14 @@ describe("parseResults", () => {
   it("parsea aunque haya comentario antes y después", () => {
     const boludle = FIXTURES.find((f) => f.id === "boludle")!;
     const trivia = FIXTURES.find((f) => f.id === "trivia")!;
-    expect(single(`uff hoy me costó\n${boludle.text}\njaja`)?.result).toEqual(boludle.expected);
-    expect(single(`${trivia.text}\nla última era imposible`)?.result).toEqual(trivia.expected);
+    expect(single(`uff hoy me costó\n${boludle.text}\njaja`)?.result).toMatchObject(boludle.expected);
+    expect(single(`${trivia.text}\nla última era imposible`)?.result).toMatchObject(trivia.expected);
   });
 
   it("lee varios resultados en un mismo mensaje, cada uno con su puntaje", () => {
     const oneByGame = GAMES.map((game) => FIXTURES.find((f) => f.id === game.id)!);
     const text = [...oneByGame].reverse().map((f) => f.text).join("\n\n");
-    expect(parseResults(text).map((m) => [m.game.id, m.result])).toEqual(
+    expect(parseResults(text).map((m) => [m.game.id, m.result])).toMatchObject(
       oneByGame.map((f) => [f.id, f.expected]),
     );
   });
@@ -63,5 +63,25 @@ describe("listGames", () => {
     expect(lines).toContain("🗺️ MapTap — https://www.maptap.gg · /maptapdetalle");
     expect(lines).toContain("🔗 Chainle — https://chainle.io · /chainledetalle");
     for (const line of lines.slice(2)) expect(line).toMatch(/ — https:\/\/\S+ · \/[a-z0-9]+detalle$/);
+  });
+});
+
+describe("pattern", () => {
+  const byId = (id: string) => FIXTURES.find((f) => f.id === id)!.text;
+
+  it("guarda la grilla de emojis del resultado", () => {
+    expect(single(byId("trivia"))?.result.pattern).toBe("🟩🟩🟩🟩🟥🟩🟥");
+    expect(single(byId("boludle"))?.result.pattern).toBe("⬜🟨⬜⬜🟨\n⬜🟨⬜⬜🟩\n⬜🟨🟩⬜🟩\n🟩🟩🟩🟩🟩");
+  });
+
+  it("queda vacía si el juego no trae una grilla solo de emojis", () => {
+    for (const id of ["size-it-up", "magnitudle", "maptap"]) expect(single(byId(id))?.result.pattern).toBe("");
+  });
+
+  it("en un mensaje con varios juegos cada uno se queda con su propia grilla", () => {
+    const matches = parseResults(`${byId("boludle")}\n\n${byId("trivia")}`);
+    const pattern = (id: string) => matches.find((m) => m.game.id === id)?.result.pattern;
+    expect(pattern("trivia")).toBe("🟩🟩🟩🟩🟥🟩🟥");
+    expect(pattern("boludle")).toBe("⬜🟨⬜⬜🟨\n⬜🟨⬜⬜🟩\n⬜🟨🟩⬜🟩\n🟩🟩🟩🟩🟩");
   });
 });

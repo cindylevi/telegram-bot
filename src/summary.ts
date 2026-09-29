@@ -1,6 +1,6 @@
 import { shortDay } from "./date";
 import { GAMES } from "./games";
-import { average, historicalRanking, longestCurrentStreak, podium, validResults } from "./stats";
+import { average, historicalRanking, longestCurrentStreak, podium, twinGroups, validResults } from "./stats";
 import type { StoredResult } from "./store";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -48,6 +48,9 @@ export function buildSummary(rows: StoredResult[], day: string): string | null {
 
     const streak = longestCurrentStreak(valid, game.id, day);
     if (streak) lines.push(`   🔥 Racha: ${joinNames(streak.names)}, ${streak.days} días`);
+
+    const twins = twinGroups(valid, game.id, day);
+    if (twins.length > 0) lines.push(`   👯 Matchi matchi (Twinning): ${twins.map(joinNames).join(" · ")}`);
   }
 
   lines.push("", "🏆 Ranking histórico");

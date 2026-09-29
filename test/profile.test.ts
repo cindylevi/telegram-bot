@@ -94,6 +94,22 @@ describe("buildProfile", () => {
     expect(text).toContain("✅ Ya jugaste: ninguno todavía");
   });
 
+  it("muestra el matchi matchi de hoy y el histórico", () => {
+    const twin = (userId: number, userName: string, game: string, day: string, pattern: string) =>
+      result({ userId, userName, game, day, pattern, display: "1" });
+    const twins = [
+      twin(1, "Cindy", "trivia", D, "🟩🟩🟥"),
+      twin(2, "Rafa", "trivia", D, "🟩🟩🟥"),
+      twin(1, "Cindy", "size-it-up", D, ""),
+      twin(2, "Rafa", "size-it-up", D, ""),
+      twin(1, "Cindy", "trivia", "2026-09-23", "🟩🟩🟩"),
+      twin(2, "Rafa", "trivia", "2026-09-23", "🟩🟩🟩"),
+    ];
+    const text = buildProfile(twins, cindy, D, true);
+    expect(text).toContain("⭐ Más jugado: La Trivia del Día (2 partidas)\n👯 Matchi matchi histórico: Rafa (3 veces)");
+    expect(text).toContain("👯 Matchi matchi de hoy: Rafa (🎓 La Trivia del Día, 📐 Size It Up)");
+  });
+
   it("festeja si ya jugó todos", () => {
     const all = GAMES.map((game) => play(1, "Cindy", game.id, D, 1, "1"));
     expect(buildProfile(all, cindy, D, true).endsWith("📌 Hoy\n🎉 ¡Ya jugaste todos!")).toBe(true);

@@ -8,6 +8,8 @@ export interface StoredResult {
   day: string;
   createdAt: number;
   tiebreak: number | null;
+  // Grilla de emojis ("" si el juego no trae una). null en los resultados guardados antes de que existiera.
+  pattern: string | null;
 }
 
 export interface NewResult extends StoredResult {
@@ -25,14 +27,15 @@ interface Row {
   day: string;
   created_at: number;
   tiebreak: number | null;
+  pattern: string | null;
 }
 
 export async function saveResult(db: D1Database, result: NewResult): Promise<void> {
   await db
     .prepare(
       `INSERT OR IGNORE INTO results
-         (chat_id, user_id, user_name, game, puzzle, score, display, day, message_id, created_at, tiebreak)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (chat_id, user_id, user_name, game, puzzle, score, display, day, message_id, created_at, tiebreak, pattern)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       result.chatId,
@@ -46,6 +49,7 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<voi
       result.messageId,
       result.createdAt,
       result.tiebreak,
+      result.pattern,
     )
     .run();
 }
@@ -53,7 +57,7 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<voi
 export async function loadResults(db: D1Database, chatId: number): Promise<StoredResult[]> {
   const { results } = await db
     .prepare(
-      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak
+      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak, pattern
        FROM results WHERE chat_id = ? ORDER BY created_at, id`,
     )
     .bind(chatId)
@@ -68,5 +72,6 @@ export async function loadResults(db: D1Database, chatId: number): Promise<Store
     day: row.day,
     createdAt: row.created_at,
     tiebreak: row.tiebreak,
+    pattern: row.pattern,
   }));
 }

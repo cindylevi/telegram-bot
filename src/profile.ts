@@ -1,6 +1,6 @@
 import { previousDay, shortDay } from "./date";
 import { GAMES } from "./games";
-import { goldCounts, longestRun, podium, streakEndingAt, validResults } from "./stats";
+import { goldCounts, historicTwin, longestRun, podium, streakEndingAt, twinsToday, validResults } from "./stats";
 import type { StoredResult } from "./store";
 import { joinNames } from "./summary";
 
@@ -60,6 +60,8 @@ export function buildProfile(rows: StoredResult[], player: Player, day: string, 
     lines.push(`🎮 ${plural(mine.length, "partida", "partidas")} en ${plural(perGame.length, "juego", "juegos")}${golds}`);
     lines.push(`📅 ${self ? "Jugaste" : "Jugó"} ${plural(days.length, "día", "días")} (desde el ${shortDay(days[0])})`);
     lines.push(`⭐ Más jugado: ${joinNames(mostPlayed)} (${plural(mostMatches, "partida", "partidas")})`);
+    const twin = historicTwin(valid, player.userId);
+    if (twin) lines.push(`👯 Matchi matchi histórico: ${joinNames(twin.names)} (${plural(twin.times, "vez", "veces")})`);
     lines.push("", "Por juego");
 
     for (const { game, rows: gameRows, golds: gameGolds } of perGame) {
@@ -89,6 +91,15 @@ export function buildProfile(rows: StoredResult[], player: Player, day: string, 
     lines.push(`✅ ${self ? "Ya jugaste" : "Ya jugó"}: ${done.length > 0 ? done.join(" · ") : "ninguno todavía"}`);
     lines.push(`⏳ ${self ? "Te faltan" : "Le faltan"} (${missing.length}):`);
     for (const game of missing) lines.push(`   ${game.emoji} ${game.name} — ${game.url}`);
+  }
+
+  const twins = twinsToday(valid, player.userId, day);
+  if (twins.length > 0) {
+    const label = (id: string) => {
+      const game = GAMES.find((g) => g.id === id)!;
+      return `${game.emoji} ${game.name}`;
+    };
+    lines.push(`👯 Matchi matchi de hoy: ${twins.map((t) => `${t.name} (${t.games.map(label).join(", ")})`).join(" · ")}`);
   }
 
   return lines.join("\n");

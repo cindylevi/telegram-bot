@@ -263,3 +263,67 @@ export function goldMedals(valid: StoredResult[], game: string, direction: Direc
   }
   return medals;
 }
+
+// Clave para comparar resultados idénticos: la grilla o, si el juego no trae, el puntaje exacto.
+// null = resultado guardado antes de que se guardara la grilla: no se compara.
+function twinKey(row: StoredResult): string | null {
+  if (row.pattern === null) return null;
+  return row.pattern || `=${row.display}`;
+}
+
+function latestNames(valid: StoredResult[]): Map<number, string> {
+  const names = new Map<number, { name: string; at: number }>();
+  for (const row of valid) {
+    const current = names.get(row.userId);
+    if (!current || row.createdAt >= current.at) names.set(row.userId, { name: row.userName, at: row.createdAt });
+  }
+  return new Map([...names].map(([userId, { name }]) => [userId, name]));
+}
+
+// Quienes tienen el resultado idéntico (grupos de 2 o más) en un juego un día.
+export function twinGroups(valid: StoredResult[], game: string, day: string): string[][] {
+  const names = latestNames(valid);
+  const groups = new Map<string, number[]>();
+  for (const row of valid) {
+    const key = row.game === game && row.day === day ? twinKey(row) : null;
+    if (key === null) continue;
+    groups.set(key, [...(groups.get(key) ?? []), row.userId]);
+  }
+  return [...groups.values()].filter((ids) => ids.length > 1).map((ids) => ids.map((id) => names.get(id)!));
+}
+
+// Con quién coincidió cada resultado de una persona: [otra persona, juego, día].
+function coincidences(valid: StoredResult[], userId: number, day?: string): { userId: number; game: string }[] {
+  const found: { userId: number; game: string }[] = [];
+  for (const mine of valid) {
+    if (mine.userId !== userId || (day !== undefined && mine.day !== day)) continue;
+    const key = twinKey(mine);
+    if (key === null) continue;
+    for (const other of valid) {
+      if (other.userId !== userId && other.game === mine.game && other.day === mine.day && twinKey(other) === key) {
+        found.push({ userId: other.userId, game: mine.game });
+      }
+    }
+  }
+  return found;
+}
+
+export function twinsToday(valid: StoredResult[], userId: number, day: string): { name: string; games: string[] }[] {
+  const names = latestNames(valid);
+  const byUser = new Map<number, string[]>();
+  for (const { userId: other, game } of coincidences(valid, userId, day)) {
+    byUser.set(other, [...(byUser.get(other) ?? []), game]);
+  }
+  return [...byUser]
+    .map(([other, games]) => ({ name: names.get(other)!, games }))
+    .sort((a, b) => b.games.length - a.games.length);
+}
+
+export function historicTwin(valid: StoredResult[], userId: number): { names: string[]; times: number } | null {
+  const names = latestNames(valid);
+  const counts = new Map<number, number>();
+  for (const { userId: other } of coincidences(valid, userId)) counts.set(other, (counts.get(other) ?? 0) + 1);
+  const most = Math.max(0, ...counts.values());
+  if (most === 0) return null;
+  return { names: [...counts].filter(([, times]) => times === most).map(([other]) => names.get(other)!), times: most };
+}

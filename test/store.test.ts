@@ -14,6 +14,7 @@ const base: NewResult = {
   day: "2026-09-24",
   createdAt: 1_790_000_000,
   tiebreak: null,
+  pattern: "",
 };
 
 describe("store", () => {
@@ -29,6 +30,11 @@ describe("store", () => {
     const rows = await loadResults(env.DB, -1001);
     expect(rows).toHaveLength(1);
     expect(rows[0].display).toBe("4/6");
+  });
+
+  it("guarda la grilla", async () => {
+    await saveResult(env.DB, { ...base, pattern: "🟩🟩🟥" });
+    expect((await loadResults(env.DB, -1001))[0].pattern).toBe("🟩🟩🟥");
   });
 
   it("guarda el desempate", async () => {

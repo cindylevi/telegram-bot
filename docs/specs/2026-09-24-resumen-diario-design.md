@@ -185,6 +185,15 @@ El `UNIQUE` + `INSERT OR IGNORE` implementa "vale el primero".
 
 Los juegos se ordenan por cantidad de jugadores (de más a menos).
 
+## Matchi matchi (Twinning)
+
+Dos personas hacen matchi matchi en un juego si ese día tienen el resultado idéntico en el puzzle del día: la misma grilla de emojis (en la Trivia, acertaron y erraron las mismas preguntas) o, en los juegos sin grilla solo de emojis (Magnitudle, Size It Up, MapTap), el mismo puntaje exacto.
+
+- La grilla se guarda en la columna `pattern` (`""` si el juego no trae una). `parseResults` la saca del bloque de cada juego: el bloque arranca en el último renglón desde el cual el parser todavía reconoce el resultado, y la grilla son los renglones sin letras ni números.
+- Los resultados guardados antes de que existiera la columna tienen `pattern = NULL` y no cuentan.
+- En el resumen: una línea por juego con los grupos (`👯 Matchi matchi (Twinning): Cindy y Rafa · Lu y Juan`).
+- En `/detalle <persona>`: el matchi matchi histórico (con quien más veces coincidió, sumando juegos y días) y los de hoy, con los juegos.
+
 ## Comandos
 
 - **Por privado** funcionan los mismos comandos (y `/start`, que muestra la ayuda), siempre con los datos del grupo y respondiendo en el privado. Solo para miembros del grupo: el bot lo chequea con `getChatMember` y si no lo es responde "Este bot es solo para los miembros del grupo." Los resultados mandados por privado no se guardan; el bot avisa que se manden en el grupo.

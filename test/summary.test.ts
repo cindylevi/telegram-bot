@@ -92,6 +92,19 @@ describe("buildSummary", () => {
     expect(buildSummary(rows, D)).toContain("🎮 Más jugado: 4x3 y Boludle (1 persona)");
   });
 
+  it("muestra los matchi matchi de cada juego", () => {
+    const trivia = (userId: number, userName: string, pattern: string) =>
+      result({ userId, userName, game: "trivia", day: D, pattern, display: "2/3" });
+    const rows = [
+      trivia(1, "Cindy", "🟩🟩🟥"),
+      trivia(2, "Rafa", "🟩🟩🟥"),
+      trivia(3, "Lu", "🟩🟥🟩"),
+      trivia(4, "Juan", "🟩🟥🟩"),
+      trivia(5, "Ana", "🟥🟩🟩"),
+    ];
+    expect(buildSummary(rows, D)).toContain("   👯 Matchi matchi (Twinning): Cindy y Rafa · Lu y Juan");
+  });
+
   it("devuelve null si ese día no jugó nadie", () => {
     const rows = [result({ userId: 1, game: "boludle", day: "2026-09-23" })];
     expect(buildSummary(rows, D)).toBeNull();

@@ -38,10 +38,34 @@ export function listGames(): string {
   return [`🎮 Juegos que reconozco (${GAMES.length})`, "", ...lines].join("\n");
 }
 
-// Un mensaje puede traer varios resultados pegados juntos: se devuelve uno por juego.
+const GRID_LINE = /^[^\p{L}\p{N}]+$/u;
+
+// Renglón donde arranca el resultado de un juego: el último desde el cual el parser todavía lo reconoce.
+function blockStart(game: Game, lines: string[]): number {
+  for (let i = lines.length - 1; i > 0; i--) {
+    if (game.parse(lines.slice(i).join("\n"))) return i;
+  }
+  return 0;
+}
+
+// Un mensaje puede traer varios resultados pegados juntos: se devuelve uno por juego,
+// cada uno con la grilla de emojis de su propio bloque.
 export function parseResults(text: string): Match[] {
-  return GAMES.flatMap((game) => {
+  const found = GAMES.flatMap((game) => {
     const result = game.parse(text);
     return result ? [{ game, result }] : [];
+  });
+  if (found.length === 0) return [];
+
+  const lines = text.split("\n");
+  const starts = found.map((match) => blockStart(match.game, lines));
+  return found.map((match, i) => {
+    const end = Math.min(lines.length, ...starts.filter((start) => start > starts[i]));
+    const pattern = lines
+      .slice(starts[i], end)
+      .map((line) => line.trim())
+      .filter((line) => GRID_LINE.test(line))
+      .join("\n");
+    return { game: match.game, result: { ...match.result, pattern } };
   });
 }

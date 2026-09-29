@@ -5,10 +5,13 @@ import {
   comparePuzzles,
   currentStreaks,
   goldMedals,
+  historicTwin,
   longestStreakEver,
   historicalRanking,
   longestCurrentStreak,
   podium,
+  twinGroups,
+  twinsToday,
   validResults,
 } from "../src/stats";
 import { result } from "./helpers";
@@ -275,5 +278,49 @@ describe("goldMedals", () => {
 
   it("un día donde nadie lo resolvió no reparte oro", () => {
     expect(goldMedals([play(1, "Rafa", D, null)], "boludle", "lower")).toEqual([]);
+  });
+});
+
+describe("matchi matchi", () => {
+  const play = (userId: number, userName: string, game: string, day: string, pattern: string | null, display = "1") =>
+    result({ userId, userName, game, day, pattern, display });
+
+  const rows = [
+    play(1, "Cindy", "trivia", D, "🟩🟩🟥"),
+    play(2, "Rafa", "trivia", D, "🟩🟩🟥"),
+    play(3, "Lu", "trivia", D, "🟩🟩🟩"),
+    play(4, "Juan", "trivia", D, "🟩🟩🟩"),
+    play(5, "Ana", "trivia", D, "🟥🟥🟥"),
+    play(1, "Cindy", "size-it-up", D, "", "185"),
+    play(2, "Rafa", "size-it-up", D, "", "185"),
+    play(3, "Lu", "size-it-up", D, "", "170"),
+    play(1, "Cindy", "trivia", "2026-09-23", "🟩🟩🟩"),
+    play(2, "Rafa", "trivia", "2026-09-23", "🟩🟩🟩"),
+    play(3, "Lu", "trivia", "2026-09-23", "🟩🟩🟩"),
+    play(1, "Cindy", "boludle", "2026-09-22", null, "4/6"),
+    play(3, "Lu", "boludle", "2026-09-22", null, "4/6"),
+  ];
+
+  it("agrupa a quienes tienen la misma grilla ese día en ese juego", () => {
+    expect(twinGroups(rows, "trivia", D)).toEqual([["Cindy", "Rafa"], ["Lu", "Juan"]]);
+  });
+
+  it("sin grilla compara el puntaje exacto", () => {
+    expect(twinGroups(rows, "size-it-up", D)).toEqual([["Cindy", "Rafa"]]);
+  });
+
+  it("los resultados guardados sin grilla no cuentan", () => {
+    expect(twinGroups(rows, "boludle", "2026-09-22")).toEqual([]);
+  });
+
+  it("lista con quién hizo matchi matchi hoy y en qué juegos", () => {
+    expect(twinsToday(rows, 1, D)).toEqual([{ name: "Rafa", games: ["trivia", "size-it-up"] }]);
+    expect(twinsToday(rows, 5, D)).toEqual([]);
+  });
+
+  it("el histórico es con quien más veces coincidió", () => {
+    expect(historicTwin(rows, 1)).toEqual({ names: ["Rafa"], times: 3 });
+    expect(historicTwin(rows, 3)).toEqual({ names: ["Juan", "Cindy", "Rafa"], times: 1 });
+    expect(historicTwin(rows, 5)).toBeNull();
   });
 });

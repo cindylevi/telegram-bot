@@ -191,6 +191,7 @@ Dos personas hacen matchi matchi en un juego si ese día tienen el resultado id�
 
 - La grilla se guarda en la columna `pattern` (`""` si el juego no trae una). `parseResults` la saca del bloque de cada juego: el bloque arranca en el último renglón desde el cual el parser todavía reconoce el resultado, y la grilla son los renglones sin letras ni números.
 - Los resultados guardados antes de que existiera la columna tienen `pattern = NULL` y no cuentan.
+- Aviso automático: apenas se guarda un resultado idéntico al de otra persona (mismo juego, puzzle y día), el bot manda al grupo `👯 ¡Cindy y Rafa hicieron matchi matchi en 🎓 La Trivia del Día!`. Si se suma alguien más, vuelve a avisar con todos. Un reenvío del mismo resultado no avisa (no se guarda).
 - En el resumen: una línea por juego con los grupos (`👯 Matchi matchi (Twinning): Cindy y Rafa · Lu y Juan`).
 - En `/detalle <persona>`: el matchi matchi histórico (con quien más veces coincidió, sumando juegos y días) y los de hoy, con los juegos.
 

@@ -3,8 +3,8 @@ import type { Env } from "./env";
 import { buildDetail } from "./detail";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import { buildProfile, findPlayers, playerById } from "./profile";
-import { loadResults, saveResult, type StoredResult } from "./store";
-import { buildSummary } from "./summary";
+import { findTwins, loadResults, saveResult, type NewResult, type StoredResult } from "./store";
+import { buildSummary, joinNames } from "./summary";
 import { isChatMember, sendMessage, type TelegramMessage, type TelegramUpdate, type TelegramUser } from "./telegram";
 
 const SUMMARY_COMMAND = /^\/resumen(@\w+)?(\s|$)/i;
@@ -124,7 +124,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
 
   const from = message.from;
   for (const match of parseResults(message.text)) {
-    await saveResult(env.DB, {
+    const result: NewResult = {
       chatId: message.chat.id,
       messageId: message.message_id,
       userId: from.id,
@@ -137,7 +137,14 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       createdAt: message.date,
       tiebreak: match.result.tiebreak ?? null,
       pattern: match.result.pattern ?? "",
-    });
+    };
+    if (!(await saveResult(env.DB, result))) continue;
+
+    const twins = await findTwins(env.DB, result);
+    if (twins.length > 0) {
+      const names = joinNames([...twins.map((twin) => twin.userName), result.userName]);
+      await reply(`👯 ¡${names} hicieron matchi matchi en ${match.game.emoji} ${match.game.name}!`);
+    }
   }
 }
 

@@ -144,6 +144,33 @@ describe("webhook", () => {
   });
 });
 
+describe("aviso de matchi matchi", () => {
+  const rafa = { id: 2, is_bot: false, first_name: "Rafa" };
+  const juan = { id: 3, is_bot: false, first_name: "Juan" };
+
+  it("avisa en el grupo cuando dos personas mandan el mismo resultado", async () => {
+    await post({ update_id: 1, message: message() });
+    expect(sent()).toEqual([]);
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    expect(sent()).toEqual([{ chat_id: CHAT, text: "👯 ¡Cindy y Rafa hicieron matchi matchi en 🧉 Boludle!" }]);
+  });
+
+  it("vuelve a avisar con todos cuando se suma otra persona", async () => {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    await post({ update_id: 3, message: message({ message_id: 3, from: juan }) });
+    expect(sentTexts().at(-1)).toBe("👯 ¡Cindy, Rafa y Juan hicieron matchi matchi en 🧉 Boludle!");
+  });
+
+  it("no avisa si la grilla es distinta ni si reenvían el mismo resultado", async () => {
+    const otro = boludle.replace("⬜🟨⬜⬜🟨", "🟨⬜⬜⬜🟨");
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otro }) });
+    await post({ update_id: 3, message: message({ message_id: 3 }) });
+    expect(sent()).toEqual([]);
+  });
+});
+
 describe("/resumen", () => {
   it("manda el resumen del día en curso", async () => {
     await post({ update_id: 1, message: message() });
@@ -210,6 +237,7 @@ describe("/detalle <nombre>", () => {
     await post({ update_id: 1, message: message() });
     await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
     await post({ update_id: 3, message: message({ message_id: 3, from: rafael }) });
+    fetchSpy.mockClear(); // los avisos de matchi matchi no son parte de estos tests
   }
 
   it("con el nombre exacto muestra a esa persona aunque otro nombre empiece igual", async () => {
@@ -251,6 +279,7 @@ describe("/detalle <nombre>", () => {
     await seed();
     const otroRafa = { id: 4, is_bot: false, first_name: "Rafa" };
     await post({ update_id: 4, message: message({ message_id: 4, from: otroRafa }) });
+    fetchSpy.mockClear();
     await post({ update_id: 5, message: message({ message_id: 5, text: "/detalle rafa" }) });
     expect(sentTexts()).toEqual([
       "Hay más de una persona que se llama Rafa. Mandá /detalle respondiendo a un mensaje de la que querés.",

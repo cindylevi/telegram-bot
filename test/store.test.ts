@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { loadResults, saveResult, type NewResult } from "../src/store";
+import { findTwins, loadResults, saveResult, type NewResult } from "../src/store";
 
 const base: NewResult = {
   chatId: -1001,
@@ -30,6 +30,27 @@ describe("store", () => {
     const rows = await loadResults(env.DB, -1001);
     expect(rows).toHaveLength(1);
     expect(rows[0].display).toBe("4/6");
+  });
+
+  it("avisa si guardó el resultado o si era un duplicado", async () => {
+    expect(await saveResult(env.DB, base)).toBe(true);
+    expect(await saveResult(env.DB, { ...base, messageId: 2 })).toBe(false);
+  });
+
+  it("encuentra a quienes tienen el mismo resultado en el mismo puzzle", async () => {
+    const trivia = { ...base, game: "trivia", puzzle: "2026-09-24", display: "2/3", pattern: "🟩🟩🟥" };
+    await saveResult(env.DB, { ...trivia, userId: 1, userName: "Cindy" });
+    await saveResult(env.DB, { ...trivia, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
+    await saveResult(env.DB, { ...trivia, userId: 3, userName: "Lu", puzzle: "2026-09-23" });
+    await saveResult(env.DB, { ...trivia, userId: 4, userName: "Viejo", pattern: null });
+    expect(await findTwins(env.DB, { ...trivia, userId: 5 })).toEqual([{ userId: 1, userName: "Cindy" }]);
+  });
+
+  it("sin grilla compara el puntaje exacto", async () => {
+    const size = { ...base, game: "size-it-up", puzzle: "2026-09-24", pattern: "" };
+    await saveResult(env.DB, { ...size, userId: 1, userName: "Cindy", display: "185" });
+    await saveResult(env.DB, { ...size, userId: 2, userName: "Rafa", display: "170" });
+    expect(await findTwins(env.DB, { ...size, userId: 3, display: "185" })).toEqual([{ userId: 1, userName: "Cindy" }]);
   });
 
   it("guarda la grilla", async () => {

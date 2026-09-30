@@ -46,6 +46,12 @@ describe("store", () => {
     expect(await findTwins(env.DB, { ...trivia, userId: 5 })).toEqual([{ userId: 1, userName: "Cindy" }]);
   });
 
+  it("con la misma grilla pero distinto puntaje no es matchi matchi", async () => {
+    const foxi = { ...base, game: "foximax", puzzle: "1495", pattern: "🟩🟩🟩🟩🟩" };
+    await saveResult(env.DB, { ...foxi, userId: 1, userName: "Cindy", display: "6/8" });
+    expect(await findTwins(env.DB, { ...foxi, userId: 2, display: "5/8" })).toEqual([]);
+  });
+
   it("sin grilla compara el puntaje exacto", async () => {
     const size = { ...base, game: "size-it-up", puzzle: "2026-09-24", pattern: "" };
     await saveResult(env.DB, { ...size, userId: 1, userName: "Cindy", display: "185" });

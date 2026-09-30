@@ -264,11 +264,11 @@ export function goldMedals(valid: StoredResult[], game: string, direction: Direc
   return medals;
 }
 
-// Clave para comparar resultados idénticos: la grilla o, si el juego no trae, el puntaje exacto.
+// Clave para comparar resultados idénticos: el puntaje exacto más la grilla (vacía si el juego no trae).
 // null = resultado guardado antes de que se guardara la grilla: no se compara.
 function twinKey(row: StoredResult): string | null {
   if (row.pattern === null) return null;
-  return row.pattern || `=${row.display}`;
+  return `${row.pattern}=${row.display}`;
 }
 
 function latestNames(valid: StoredResult[]): Map<number, string> {

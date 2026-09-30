@@ -74,6 +74,16 @@ describe("pattern", () => {
     expect(single(byId("boludle"))?.result.pattern).toBe("⬜🟨⬜⬜🟨\n⬜🟨⬜⬜🟩\n⬜🟨🟩⬜🟩\n🟩🟩🟩🟩🟩");
   });
 
+  it("incluye renglones de grilla con un número al final", () => {
+    const text = "🦊#FoxiMax #1495 6/8 (18 letters)\nhttps://foximax.com/\n\n🟩🟩🟩🟩🟩\n🟩🟩⬜⬜🟩7";
+    expect(single(text)?.result.pattern).toBe("🟩🟩🟩🟩🟩\n🟩🟩⬜⬜🟩7");
+  });
+
+  it("en Magnitudle queda vacía aunque la barra venga sola en su renglón", () => {
+    const text = "Magnitudle — Daily Question S20 · Q02\n\nScore: 70/100\n🟥🟥🟥🟥🟥🟥🟥◻️◻️◻️\nhttps://magnitudle.com/daily";
+    expect(single(text)?.result.pattern).toBe("");
+  });
+
   it("queda vacía si el juego no trae una grilla solo de emojis", () => {
     for (const id of ["size-it-up", "magnitudle", "maptap"]) expect(single(byId(id))?.result.pattern).toBe("");
   });

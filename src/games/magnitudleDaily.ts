@@ -6,6 +6,7 @@ export const magnitudleDaily: Game = {
   emoji: "📏",
   url: "https://magnitudle.com/daily",
   direction: "higher",
+  grid: false,
   parse(text) {
     const match = text.match(
       /Magnitudle\s*[—–-]\s*Daily Question\s+(S\d+)\s*[·.•]\s*(Q\d+)\s*Score:\s*(\d+)\s*\/\s*100/i,

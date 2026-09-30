@@ -38,7 +38,9 @@ export function listGames(): string {
   return [`🎮 Juegos que reconozco (${GAMES.length})`, "", ...lines].join("\n");
 }
 
-const GRID_LINE = /^[^\p{L}\p{N}]+$/u;
+// Renglón de grilla: solo emojis, a lo sumo con un número pegado al final (FoxiMax pone "🟩🟩⬜⬜🟩7";
+// "🟥🟥⬜️⬜️⬜️ 43" de MapTap es un puntaje por ronda, no grilla).
+const GRID_LINE = /^[^\p{L}\p{N}]*[^\p{L}\p{N}\s]\p{N}*$/u;
 
 // Renglón donde arranca el resultado de un juego: el último desde el cual el parser todavía lo reconoce.
 function blockStart(game: Game, lines: string[]): number {
@@ -61,11 +63,14 @@ export function parseResults(text: string): Match[] {
   const starts = found.map((match) => blockStart(match.game, lines));
   return found.map((match, i) => {
     const end = Math.min(lines.length, ...starts.filter((start) => start > starts[i]));
-    const pattern = lines
-      .slice(starts[i], end)
-      .map((line) => line.trim())
-      .filter((line) => GRID_LINE.test(line))
-      .join("\n");
+    const pattern =
+      match.game.grid === false
+        ? ""
+        : lines
+            .slice(starts[i], end)
+            .map((line) => line.trim())
+            .filter((line) => GRID_LINE.test(line))
+            .join("\n");
     return { game: match.game, result: { ...match.result, pattern } };
   });
 }

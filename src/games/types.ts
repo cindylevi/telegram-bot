@@ -16,5 +16,7 @@ export interface Game {
   emoji: string;
   url: string;
   direction: Direction;
+  // false = la grilla no se guarda porque solo refleja el puntaje (matchi matchi compara el número).
+  grid?: false;
   parse(text: string): ParsedResult | null;
 }

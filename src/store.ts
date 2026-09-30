@@ -56,15 +56,15 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<boo
   return meta.changes > 0;
 }
 
-// Quienes ya mandaron el resultado idéntico en el mismo puzzle y día: misma grilla o,
-// si el juego no trae grilla, el mismo puntaje exacto.
+// Quienes ya mandaron el resultado idéntico en el mismo puzzle y día: mismo puntaje exacto
+// y, si el juego trae grilla, también la misma grilla.
 export async function findTwins(db: D1Database, result: NewResult): Promise<{ userId: number; userName: string }[]> {
   if (result.pattern === null) return [];
   const { results } = await db
     .prepare(
       `SELECT user_id, user_name FROM results
        WHERE chat_id = ? AND game = ? AND puzzle = ? AND day = ? AND user_id <> ?
-         AND pattern = ? AND (? <> '' OR display = ?)
+         AND pattern = ? AND display = ?
        ORDER BY created_at, id`,
     )
     .bind(
@@ -73,7 +73,6 @@ export async function findTwins(db: D1Database, result: NewResult): Promise<{ us
       result.puzzle,
       result.day,
       result.userId,
-      result.pattern,
       result.pattern,
       result.display,
     )

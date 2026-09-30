@@ -193,4 +193,12 @@ Final score: 873`,
 🔗🔗🔗🔗🔗`,
     expected: { puzzle: "41", score: 3595, display: "3,595/5,000" },
   },
+  {
+    id: "chainle",
+    text: `Chainle #42 · 2,421 🔗
+Beat 18% of players
+🟧🟥🟧🟨🟨
+chainle.io`,
+    expected: { puzzle: "42", score: 2421, display: "2,421" },
+  },
 ];

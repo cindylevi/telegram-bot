@@ -1,5 +1,6 @@
-import { previousDay, shortDay } from "./date";
+import { gameDay, previousDay, shortDay } from "./date";
 import { GAMES } from "./games";
+import type { Game } from "./games/types";
 import { goldCounts, historicTwin, longestRun, podium, streakEndingAt, twinsToday, validResults } from "./stats";
 import type { StoredResult } from "./store";
 import { joinNames } from "./summary";
@@ -38,7 +39,8 @@ export function playerById(rows: StoredResult[], userId: number, fallbackName: s
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
-export function buildProfile(rows: StoredResult[], player: Player, day: string, self: boolean): string {
+// now: momento del pedido, para saber qué puzzle es el de hoy en los juegos que no cambian a la medianoche.
+export function buildProfile(rows: StoredResult[], player: Player, day: string, self: boolean, now?: number): string {
   const valid = validResults(rows);
   const mine = valid.filter((row) => row.userId === player.userId);
   const lines = [`👤 ${player.name} — detalle`, ""];
@@ -80,7 +82,11 @@ export function buildProfile(rows: StoredResult[], player: Player, day: string, 
     }
   }
 
-  const today = mine.filter((row) => row.day === day);
+  const todayOf = (game: Game) => (now === undefined ? day : gameDay(game, now));
+  const today = mine.filter((row) => {
+    const game = GAMES.find((g) => g.id === row.game);
+    return game !== undefined && row.day === todayOf(game);
+  });
   const played = GAMES.filter((game) => today.some((row) => row.game === game.id));
   const missing = GAMES.filter((game) => !played.includes(game));
   lines.push("", "📌 Hoy");

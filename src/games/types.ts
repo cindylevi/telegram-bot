@@ -18,5 +18,8 @@ export interface Game {
   direction: Direction;
   // false = la grilla no se guarda porque solo refleja el puntaje (matchi matchi compara el número).
   grid?: false;
+  // Hora argentina en la que cambia el puzzle, si no es a la medianoche: desde esa hora lo que se manda
+  // cuenta para el día siguiente (Pedantle cambia a las 16).
+  dayStartsAt?: number;
   parse(text: string): ParsedResult | null;
 }

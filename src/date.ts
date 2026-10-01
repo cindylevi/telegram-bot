@@ -1,3 +1,5 @@
+import type { Game } from "./games/types";
+
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const formatter = new Intl.DateTimeFormat("en-US", {
@@ -11,6 +13,12 @@ export function dayInArgentina(unixSeconds: number): string {
   const parts = formatter.formatToParts(new Date(unixSeconds * 1000));
   const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)!.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+// Día al que pertenece un resultado de ese juego: el día argentino, corrido si el puzzle cambia a otra hora.
+export function gameDay(game: Pick<Game, "dayStartsAt">, unixSeconds: number): string {
+  const shift = game.dayStartsAt === undefined ? 0 : (24 - game.dayStartsAt) * 3600;
+  return dayInArgentina(unixSeconds + shift);
 }
 
 export function previousDay(day: string): string {

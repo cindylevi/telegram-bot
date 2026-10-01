@@ -83,6 +83,19 @@ describe("webhook", () => {
     expect((await storedRows())[0]).toMatchObject({ game: "size-it-up", puzzle: "2026-09-24" });
   });
 
+  it("en Pedantle lo mandado desde las 16 cuenta para el día siguiente", async () => {
+    const pedantle = (n: number) => `I found #pedantle #${n} in 54 guesses!`;
+    const rafa = { id: 2, is_bot: false, first_name: "Rafa" };
+    const at = (hourUtc: number) => Date.UTC(2026, 8, 30, hourUtc, 20) / 1000;
+    await post({ update_id: 1, message: message({ text: pedantle(1595), date: at(18) }) }); // 15:20 ART
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: pedantle(1596), date: at(23) }) }); // 20:20 ART
+    const rows = await env.DB.prepare("SELECT user_name, puzzle, day FROM results ORDER BY id").all();
+    expect(rows.results).toEqual([
+      { user_name: "Cindy", puzzle: "1595", day: "2026-09-30" },
+      { user_name: "Rafa", puzzle: "1596", day: "2026-10-01" },
+    ]);
+  });
+
   it("guarda todos los resultados de un mensaje con varios juegos", async () => {
     const pedantle = FIXTURES.find((f) => f.id === "pedantle")!.text;
     const metazooa = FIXTURES.find((f) => f.id === "metazooa")!.text;

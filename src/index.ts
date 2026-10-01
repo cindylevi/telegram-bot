@@ -1,4 +1,4 @@
-import { dayInArgentina } from "./date";
+import { dayInArgentina, gameDay } from "./date";
 import type { Env } from "./env";
 import { buildDetail } from "./detail";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
@@ -38,7 +38,7 @@ async function postSummary(env: Env, day: string): Promise<boolean> {
 
 // A quién pide ver /detalle: la persona del mensaje respondido, la del nombre, o quien lo pide.
 function personDetail(rows: StoredResult[], message: TelegramMessage, from: TelegramUser, query: string | undefined, day: string): string {
-  const show = (userId: number, name: string) => buildProfile(rows, playerById(rows, userId, name), day, userId === from.id);
+  const show = (userId: number, name: string) => buildProfile(rows, playerById(rows, userId, name), day, userId === from.id, message.date);
 
   const replied = message.reply_to_message?.from;
   if (replied && !replied.is_bot) return show(replied.id, replied.first_name);
@@ -112,7 +112,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   const detail = message.text.match(DETAIL_COMMAND);
   if (detail) {
     const game = gameByCommand(detail[1]);
-    if (game) await reply(buildDetail(await loadResults(env.DB, groupId), game, day));
+    if (game) await reply(buildDetail(await loadResults(env.DB, groupId), game, gameDay(game, message.date)));
     return;
   }
 
@@ -133,7 +133,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       puzzle: match.result.puzzle ?? day,
       score: match.result.score,
       display: match.result.display,
-      day,
+      day: gameDay(match.game, message.date),
       createdAt: message.date,
       tiebreak: match.result.tiebreak ?? null,
       pattern: match.result.pattern ?? "",

@@ -96,6 +96,11 @@ describe("webhook", () => {
     ]);
   });
 
+  it("usa el apodo de quienes tienen uno en vez del nombre de Telegram", async () => {
+    await post({ update_id: 1, message: message({ from: { id: 5190757894, is_bot: false, first_name: "J" } }) });
+    expect((await storedRows())[0]).toMatchObject({ user_name: "Juanma B." });
+  });
+
   it("guarda todos los resultados de un mensaje con varios juegos", async () => {
     const pedantle = FIXTURES.find((f) => f.id === "pedantle")!.text;
     const metazooa = FIXTURES.find((f) => f.id === "metazooa")!.text;

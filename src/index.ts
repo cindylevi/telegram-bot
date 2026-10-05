@@ -36,13 +36,22 @@ async function postSummary(env: Env, day: string): Promise<boolean> {
   return true;
 }
 
+// Apodos para quienes tienen en Telegram un nombre que no los identifica.
+const NICKNAMES: Record<number, string> = {
+  5190757894: "Juanma B.",
+};
+
+function displayName(user: TelegramUser): string {
+  return NICKNAMES[user.id] ?? (user.first_name || user.username || String(user.id));
+}
+
 // A quién pide ver /detalle: la persona del mensaje respondido, la del nombre, o quien lo pide.
 function personDetail(rows: StoredResult[], message: TelegramMessage, from: TelegramUser, query: string | undefined, day: string): string {
   const show = (userId: number, name: string) => buildProfile(rows, playerById(rows, userId, name), day, userId === from.id, message.date);
 
   const replied = message.reply_to_message?.from;
-  if (replied && !replied.is_bot) return show(replied.id, replied.first_name);
-  if (!query) return show(from.id, from.first_name);
+  if (replied && !replied.is_bot) return show(replied.id, displayName(replied));
+  if (!query) return show(from.id, displayName(from));
 
   const { exact, matches } = findPlayers(rows, query);
   if (matches.length === 0) return "No encontré a nadie que se llame así.";
@@ -128,7 +137,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       chatId: message.chat.id,
       messageId: message.message_id,
       userId: from.id,
-      userName: from.first_name || from.username || String(from.id),
+      userName: displayName(from),
       game: match.game.id,
       puzzle: match.result.puzzle ?? day,
       score: match.result.score,

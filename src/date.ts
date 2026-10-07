@@ -43,7 +43,11 @@ const MONTHS: Record<string, number> = {
   julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
 };
 
-// Número de mes (1–12) a partir del nombre en inglés o en español.
+// Número de mes (1–12) a partir del nombre en inglés o en español, completo o abreviado ("Oct", "Sept").
 export function monthNumber(name: string): number | null {
-  return MONTHS[name.toLowerCase()] ?? null;
+  const lower = name.toLowerCase();
+  if (MONTHS[lower]) return MONTHS[lower];
+  if (lower.length < 3) return null;
+  const full = Object.keys(MONTHS).find((month) => month.startsWith(lower));
+  return full ? MONTHS[full] : null;
 }

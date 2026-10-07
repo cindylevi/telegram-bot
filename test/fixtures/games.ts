@@ -201,4 +201,26 @@ Beat 18% of players
 chainle.io`,
     expected: { puzzle: "42", score: 2421, display: "2,421" },
   },
+  {
+    id: "cluesbysam",
+    text: `I solved the daily #CluesBySam, Oct 7th 2026 (Tricky), in 03:19
+🟩🟩🟩🟩
+🟩🟩🟩🟩
+🟩🟩🟩🟩
+🟩🟩🟩🟩
+🟩🟩🟩🟩
+https://cluesbysam.com`,
+    expected: { puzzle: "2026-10-07", score: 0, display: "0 errores · 03:19", tiebreak: 199 },
+  },
+  {
+    id: "cluesbysam",
+    text: `I solved the daily #CluesBySam, Oct 6th 2026 (Medium), in less than 10 minutes
+🟩🟩🟩🟩
+🟩🟩🟩🟩
+🟩🟨🟩🟩
+🟩🟩🟩🟩
+🟩🟩🟩🟩
+https://cluesbysam.com`,
+    expected: { puzzle: "2026-10-06", score: 1, display: "1 error · <10 min", tiebreak: 600 },
+  },
 ];

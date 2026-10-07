@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayInArgentina, gameDay, isoDate, previousDay, shortDay } from "../src/date";
+import { dayInArgentina, gameDay, isoDate, previousDay, shortDay, monthNumber } from "../src/date";
 
 const utc = (...args: [number, number, number, number, number]) => Date.UTC(...args) / 1000;
 
@@ -43,5 +43,16 @@ describe("shortDay", () => {
 describe("isoDate", () => {
   it("rellena con ceros", () => {
     expect(isoDate(2026, 9, 3)).toBe("2026-09-03");
+  });
+});
+
+describe("monthNumber", () => {
+  it("acepta nombres completos y abreviados", () => {
+    expect(monthNumber("October")).toBe(10);
+    expect(monthNumber("Oct")).toBe(10);
+    expect(monthNumber("Sept")).toBe(9);
+    expect(monthNumber("dic")).toBe(12);
+    expect(monthNumber("Oc")).toBeNull();
+    expect(monthNumber("foo")).toBeNull();
   });
 });

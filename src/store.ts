@@ -80,6 +80,27 @@ export async function findTwins(db: D1Database, result: NewResult): Promise<{ us
   return results.map((row) => ({ userId: row.user_id, userName: row.user_name }));
 }
 
+// Los resultados del último mensaje con resultados de esa persona, si lo mandó desde `since`.
+export async function lastMessageResults(
+  db: D1Database,
+  chatId: number,
+  userId: number,
+  since: number,
+): Promise<StoredResult[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak, pattern
+       FROM results
+       WHERE chat_id = ? AND user_id = ? AND created_at >= ? AND message_id = (
+         SELECT MAX(message_id) FROM results WHERE chat_id = ? AND user_id = ?
+       )
+       ORDER BY id`,
+    )
+    .bind(chatId, userId, since, chatId, userId)
+    .all<Row>();
+  return results.map(fromRow);
+}
+
 export async function loadResults(db: D1Database, chatId: number): Promise<StoredResult[]> {
   const { results } = await db
     .prepare(
@@ -88,7 +109,11 @@ export async function loadResults(db: D1Database, chatId: number): Promise<Store
     )
     .bind(chatId)
     .all<Row>();
-  return results.map((row) => ({
+  return results.map(fromRow);
+}
+
+function fromRow(row: Row): StoredResult {
+  return {
     userId: row.user_id,
     userName: row.user_name,
     game: row.game,
@@ -99,5 +124,5 @@ export async function loadResults(db: D1Database, chatId: number): Promise<Store
     createdAt: row.created_at,
     tiebreak: row.tiebreak,
     pattern: row.pattern,
-  }));
+  };
 }

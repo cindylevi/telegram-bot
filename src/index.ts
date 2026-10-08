@@ -1,9 +1,11 @@
 import { dayInArgentina, gameDay } from "./date";
 import type { Env } from "./env";
 import { buildDetail } from "./detail";
+import { ftForBlock, ftLines, ftOnly, resolvePartners, type Partners } from "./ft";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
+import type { Game } from "./games/types";
 import { buildProfile, findPlayers, playerById } from "./profile";
-import { findTwins, loadResults, saveResult, type NewResult, type StoredResult } from "./store";
+import { findTwins, lastMessageResults, loadResults, saveResult, type NewResult, type StoredResult } from "./store";
 import { buildSummary, joinNames } from "./summary";
 import { isChatMember, sendMessage, type TelegramMessage, type TelegramUpdate, type TelegramUser } from "./telegram";
 
@@ -25,6 +27,7 @@ const HELP = [
   ...GAMES.map((game) => `/${commandName(game)}detalle — ${game.emoji} ${game.name}`),
   "",
   "Pegá tu resultado en el grupo y lo guardo solo. El resumen sale todos los días a las 23:58.",
+  "Si lo jugaron juntos, poné \"ft <nombres>\" abajo del resultado o en el mensaje siguiente y cuenta para todos.",
   "Los comandos también andan por privado.",
 ].join("\n");
 
@@ -131,15 +134,29 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     return;
   }
 
-  const from = message.from;
-  for (const match of parseResults(message.text)) {
+  const matches = parseResults(message.text);
+  const notes =
+    matches.length > 0 ? await saveResults(env, message, message.from, matches) : await ftAfterResults(env, message, message.from);
+  if (notes.length > 0) await reply(notes.join("\n"));
+}
+
+type Matches = ReturnType<typeof parseResults>;
+
+// Guarda los resultados del mensaje, también para quienes nombra cada ft, y devuelve lo que hay que contestar.
+async function saveResults(env: Env, message: TelegramMessage, from: TelegramUser, matches: Matches): Promise<string[]> {
+  const fts = ftLines(message.text!);
+  const rows = fts.length > 0 ? await loadResults(env.DB, message.chat.id) : [];
+  const partnersByLine = new Map(fts.map((ft) => [ft.line, resolvePartners(rows, ft.names, from.id)]));
+  const notes: string[] = [];
+
+  for (const match of matches) {
     const result: NewResult = {
       chatId: message.chat.id,
       messageId: message.message_id,
       userId: from.id,
       userName: displayName(from),
       game: match.game.id,
-      puzzle: match.result.puzzle ?? day,
+      puzzle: match.result.puzzle ?? dayInArgentina(message.date),
       score: match.result.score,
       display: match.result.display,
       day: gameDay(match.game, message.date),
@@ -149,12 +166,64 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     };
     if (!(await saveResult(env.DB, result))) continue;
 
-    const twins = await findTwins(env.DB, result);
+    const ft = ftForBlock(fts, match.line);
+    const partners = ft ? partnersByLine.get(ft.line)!.players : [];
+    const shared = await shareResult(env, result, partners);
+    if (shared.length > 0) notes.push(sharedNote(shared, match.game));
+
+    // Los del ft tienen el mismo resultado a la fuerza: el matchi matchi es solo con los de afuera.
+    const inFt = new Set(partners.map((player) => player.userId));
+    const twins = (await findTwins(env.DB, result)).filter((twin) => !inFt.has(twin.userId));
     if (twins.length > 0) {
-      const names = joinNames([...twins.map((twin) => twin.userName), result.userName]);
-      await reply(`👯 ¡${names} hicieron matchi matchi en ${match.game.emoji} ${match.game.name}!`);
+      const names = joinNames([...twins.map((twin) => twin.userName), result.userName, ...shared]);
+      await sendMessage(env.BOT_TOKEN, message.chat.id, `👯 ¡${names} hicieron matchi matchi en ${match.game.emoji} ${match.game.name}!`);
     }
   }
+  return [...notes, ...[...partnersByLine.values()].flatMap(missingNotes)];
+}
+
+const FT_WINDOW_SECONDS = 600;
+
+// Un mensaje que es solo un ft suma a los nombrados al último resultado de la misma persona, si es reciente.
+async function ftAfterResults(env: Env, message: TelegramMessage, from: TelegramUser): Promise<string[]> {
+  const wanted = ftOnly(message.text!);
+  if (!wanted) return [];
+  const last = await lastMessageResults(env.DB, message.chat.id, from.id, message.date - FT_WINDOW_SECONDS);
+  if (last.length === 0) return [];
+
+  const partners = resolvePartners(await loadResults(env.DB, message.chat.id), wanted, from.id);
+  const notes: string[] = [];
+  for (const stored of last) {
+    const game = GAMES.find((candidate) => candidate.id === stored.game);
+    if (!game) continue;
+    const shared = await shareResult(env, { ...stored, chatId: message.chat.id, messageId: message.message_id }, partners.players);
+    if (shared.length > 0) notes.push(sharedNote(shared, game));
+  }
+  return [...notes, ...missingNotes(partners)];
+}
+
+// Copia el resultado a cada compañero; si alguien ya tenía el suyo de ese puzzle, vale el suyo.
+async function shareResult(env: Env, result: NewResult, partners: Partners["players"]): Promise<string[]> {
+  const shared: string[] = [];
+  for (const partner of partners) {
+    if (await saveResult(env.DB, { ...result, userId: partner.userId, userName: partner.name })) shared.push(partner.name);
+  }
+  return shared;
+}
+
+function sharedNote(names: string[], game: Game): string {
+  return `🤝 Anotado también para ${joinNames(names)} en ${game.emoji} ${game.name}`;
+}
+
+function missingNotes(partners: Partners): string[] {
+  const notes = partners.ambiguous.map(({ name, options }) => {
+    const choices = `${options.slice(0, -1).join(", ")} o ${options.at(-1)}`;
+    return `"${name}" puede ser ${choices}: no lo anoté.`;
+  });
+  if (partners.unknown.length > 0) {
+    notes.unshift(`No conozco a ${joinNames(partners.unknown)}: que mande un resultado propio primero.`);
+  }
+  return notes;
 }
 
 export default {

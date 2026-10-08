@@ -367,3 +367,97 @@ describe("cron", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+describe("ft", () => {
+  const rafa = { id: 2, is_bot: false, first_name: "Rafa" };
+  const tomer = { id: 3, is_bot: false, first_name: "Tomer" };
+  const fourByThree = FIXTURES.find((f) => f.id === "4x3")!.text;
+  const chainle = FIXTURES.find((f) => f.id === "chainle")!.text;
+
+  // Rafa y Tomer ya mandaron algo antes, así el bot los conoce.
+  async function knownPlayers() {
+    const metazooa = FIXTURES.find((f) => f.id === "metazooa")!.text;
+    await post({ update_id: 101, message: message({ message_id: 101, from: rafa, text: metazooa }) });
+    await post({ update_id: 102, message: message({ message_id: 102, from: tomer, text: metazooa }) });
+    fetchSpy.mockClear();
+  }
+
+  async function rowsOf(game: string) {
+    const { results } = await env.DB.prepare("SELECT user_name, score, display FROM results WHERE game = ? ORDER BY user_id")
+      .bind(game)
+      .all();
+    return results;
+  }
+
+  it("en el mismo mensaje el resultado cuenta también para el ft", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ text: `${boludle}\nft Rafa` }) });
+    expect((await rowsOf("boludle")).map((row) => row.user_name).sort()).toEqual(["Cindy", "Rafa"]);
+    expect(sentTexts()).toEqual(["🤝 Anotado también para Rafa en 🧉 Boludle"]);
+  });
+
+  it("cada ft vale para los resultados que tiene arriba", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ text: `${fourByThree}\n ft Rafa \n\n${chainle}\n ft tomer zoe etc` }) });
+    const players = async (game: string) => (await rowsOf(game)).map((row) => row.user_name).sort();
+    expect(await players("4x3")).toEqual(["Cindy", "Rafa"]);
+    expect(await players("chainle")).toEqual(["Cindy", "Tomer"]);
+    expect(sentTexts()).toEqual([
+      "🤝 Anotado también para Rafa en 🟦 4x3\n🤝 Anotado también para Tomer en 🔗 Chainle\nNo conozco a zoe: que mande un resultado propio primero.",
+    ]);
+  });
+
+  it("un ft único al final vale para todos los juegos del mensaje", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ text: `${fourByThree}\n\n${chainle}\nft Rafa` }) });
+    expect((await rowsOf("4x3")).map((row) => row.user_name).sort()).toEqual(["Cindy", "Rafa"]);
+    expect((await rowsOf("chainle")).map((row) => row.user_name).sort()).toEqual(["Cindy", "Rafa"]);
+  });
+
+  it("el ft en el mensaje siguiente vale para el último resultado de los últimos 10 minutos", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ message_id: 1, text: `${fourByThree}\n\n${chainle}` }) });
+    await post({ update_id: 2, message: message({ message_id: 3, date: DATE + 120, text: "ft Rafa" }) });
+    expect((await rowsOf("chainle")).map((row) => row.user_name).sort()).toEqual(["Cindy", "Rafa"]);
+    expect((await rowsOf("4x3")).map((row) => row.user_name).sort()).toEqual(["Cindy", "Rafa"]);
+    expect(sentTexts()).toEqual(["🤝 Anotado también para Rafa en 🟦 4x3\n🤝 Anotado también para Rafa en 🔗 Chainle"]);
+  });
+
+  it("ignora el ft que llega pasados los 10 minutos", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ message_id: 1 }) });
+    await post({ update_id: 2, message: message({ message_id: 2, date: DATE + 601, text: "ft Rafa" }) });
+    expect((await rowsOf("boludle")).map((row) => row.user_name)).toEqual(["Cindy"]);
+    expect(sent()).toEqual([]);
+  });
+
+  it("avisa si el nombre es ambiguo y no lo anota", async () => {
+    await knownPlayers();
+    const rafael = { id: 4, is_bot: false, first_name: "Rafael" };
+    const metazooa = FIXTURES.find((f) => f.id === "metazooa")!.text;
+    await post({ update_id: 103, message: message({ message_id: 103, from: rafael, text: metazooa }) });
+    fetchSpy.mockClear();
+    await post({ update_id: 1, message: message({ text: `${boludle}\nft raf` }) });
+    expect((await rowsOf("boludle")).map((row) => row.user_name)).toEqual(["Cindy"]);
+    expect(sentTexts()).toEqual(['"raf" puede ser Rafa o Rafael: no lo anoté.']);
+  });
+
+  it("si el del ft ya había mandado su resultado, vale el suyo", async () => {
+    await knownPlayers();
+    const otro = boludle.replace("⬜🟨⬜⬜🟨", "🟨⬜⬜⬜🟨");
+    await post({ update_id: 1, message: message({ message_id: 1, from: rafa, text: otro }) });
+    fetchSpy.mockClear();
+    await post({ update_id: 2, message: message({ message_id: 2, text: `${boludle}\nft Rafa` }) });
+    const { results } = await env.DB.prepare("SELECT user_name, pattern FROM results WHERE game = 'boludle' AND user_id = 2").all();
+    expect(results).toEqual([{ user_name: "Rafa", pattern: expect.stringContaining("🟨⬜⬜⬜🟨") }]);
+    expect(sent()).toEqual([]);
+  });
+
+  it("no hay matchi matchi dentro del ft, pero sí con alguien de afuera", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ message_id: 1, text: `${boludle}\nft Rafa` }) });
+    expect(sentTexts()).toEqual(["🤝 Anotado también para Rafa en 🧉 Boludle"]);
+    await post({ update_id: 2, message: message({ message_id: 2, from: tomer }) });
+    expect(sentTexts().at(-1)).toBe("👯 ¡Cindy, Rafa y Tomer hicieron matchi matchi en 🧉 Boludle!");
+  });
+});

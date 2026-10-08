@@ -25,6 +25,8 @@ export const GAMES: Game[] = [
 export interface Match {
   game: Game;
   result: ParsedResult;
+  // Renglón del mensaje donde arranca el bloque de este resultado.
+  line: number;
 }
 
 // Telegram no acepta guiones en los comandos: "minute-cryptic" → "minutecryptic".
@@ -74,6 +76,6 @@ export function parseResults(text: string): Match[] {
             .map((line) => line.trim())
             .filter((line) => GRID_LINE.test(line))
             .join("\n");
-    return { game: match.game, result: { ...match.result, pattern } };
+    return { game: match.game, result: { ...match.result, pattern }, line: starts[i] };
   });
 }

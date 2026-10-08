@@ -223,4 +223,18 @@ https://cluesbysam.com`,
 https://cluesbysam.com`,
     expected: { puzzle: "2026-10-06", score: 1, display: "1 error · <10 min", tiebreak: 600 },
   },
+  {
+    id: "originle",
+    text: `Originle #4 · 1,470
+🟥🟥🟩 · 8/8 clues
+https://originle.io/querubin/?day=4`,
+    expected: { puzzle: "4", score: 1470, display: "1,470 · 8/8 pistas" },
+  },
+  {
+    id: "originle",
+    text: `Originle #3 · 0
+🟥🏳️ · 5/8 clues
+https://originle.io/mattias/?day=3`,
+    expected: { puzzle: "3", score: 0, display: "0 · 5/8 pistas 🏳️" },
+  },
 ];

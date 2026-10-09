@@ -59,7 +59,12 @@ Overall Score 185
 🟥🟥⬜️⬜️⬜️ 30
 ⬜️⬜️⬜️⬜️⬜️ 8
 https://magnitudle.com/size-it-up`,
-    expected: { puzzle: null, score: 185, display: "185" },
+    expected: {
+      puzzle: null,
+      score: 185,
+      display: "185",
+      pattern: "🟥🟥⬜️⬜️⬜️ 43\n🟥🟥🟥🟥⬜️ 74\n🟥🟥⬜️⬜️⬜️ 30\n🟥🟥⬜️⬜️⬜️ 30\n⬜️⬜️⬜️⬜️⬜️ 8",
+    },
   },
   {
     id: "krillion",
@@ -180,7 +185,7 @@ https://www.minutecryptic.com/?utm_source=share`,
     text: `www.maptap.gg September 29
 87🎓 92🏆 92🏆 82🌟 88🎉
 Final score: 873`,
-    expected: { puzzle: "09-29", score: 873, display: "873" },
+    expected: { puzzle: "09-29", score: 873, display: "873", pattern: "87🎓 92🏆 92🏆 82🌟 88🎉" },
   },
   {
     id: "chainle",

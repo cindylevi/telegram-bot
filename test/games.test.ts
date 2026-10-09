@@ -84,8 +84,9 @@ describe("pattern", () => {
     expect(single(text)?.result.pattern).toBe("");
   });
 
+  // Size It Up y MapTap no traen grilla pero sí rondas: su detalle lo prueban los fixtures.
   it("queda vacía si el juego no trae una grilla solo de emojis", () => {
-    for (const id of ["size-it-up", "magnitudle", "maptap"]) expect(single(byId(id))?.result.pattern).toBe("");
+    expect(single(byId("magnitudle"))?.result.pattern).toBe("");
   });
 
   it("en un mensaje con varios juegos cada uno se queda con su propia grilla", () => {

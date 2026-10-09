@@ -6,7 +6,8 @@ export interface ParsedResult {
   display: string;
   // Desempate entre puntajes iguales: gana el menor (por ejemplo, segundos). null = sin dato.
   tiebreak?: number | null;
-  // Grilla de emojis del resultado ("" si el juego no trae una). La completa parseResults.
+  // Detalle del resultado: la grilla de emojis o, si el parser lo da, las rondas (Size It Up, MapTap).
+  // "" si no trae. Si el parser no lo da, lo completa parseResults con la grilla.
   pattern?: string;
 }
 

@@ -72,14 +72,13 @@ export function parseResults(text: string): Match[] {
   const starts = found.map((match) => blockStart(match.game, lines));
   return found.map((match, i) => {
     const end = Math.min(lines.length, ...starts.filter((start) => start > starts[i]));
-    const pattern =
-      match.game.grid === false
-        ? ""
-        : lines
-            .slice(starts[i], end)
-            .map((line) => line.trim())
-            .filter((line) => GRID_LINE.test(line))
-            .join("\n");
+    const grid = () =>
+      lines
+        .slice(starts[i], end)
+        .map((line) => line.trim())
+        .filter((line) => GRID_LINE.test(line))
+        .join("\n");
+    const pattern = match.result.pattern ?? (match.game.grid === false ? "" : grid());
     return { game: match.game, result: { ...match.result, pattern }, line: starts[i] };
   });
 }

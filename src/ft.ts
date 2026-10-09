@@ -1,4 +1,4 @@
-import { findPlayers, type Player } from "./profile";
+import { findPlayers, playerById, type Player } from "./profile";
 import type { StoredResult } from "./store";
 
 // "ft Rafa": el resultado lo hicieron juntos y cuenta también para los nombrados.
@@ -14,8 +14,8 @@ export interface FtLine {
 function names(rest: string): string[] {
   return rest
     .split(SEPARATOR)
-    .map((word) => word.replace(/^@/, "").replace(/[.!?]+$/, ""))
-    .filter((word) => word !== "" && !FILLER.has(word.toLowerCase()));
+    .map((word) => word.replace(/[.!?]+$/, ""))
+    .filter((word) => word.replace(/^@/, "") !== "" && !FILLER.has(word.toLowerCase()));
 }
 
 export function ftLines(text: string): FtLine[] {
@@ -43,11 +43,17 @@ export interface Partners {
   ambiguous: { name: string; options: string[] }[];
 }
 
-// Busca a cada nombrado como /detalle <nombre>, entre quienes ya mandaron algún resultado.
-export function resolvePartners(rows: StoredResult[], wanted: string[], selfId: number): Partners {
+// Busca a cada nombrado entre quienes ya mandaron algún resultado: "@usuario" por su usuario de Telegram
+// (usernames: en minúsculas) y si no, como /detalle <nombre>.
+export function resolvePartners(rows: StoredResult[], wanted: string[], selfId: number, usernames = new Map<string, number>()): Partners {
   const partners: Partners = { players: [], unknown: [], ambiguous: [] };
-  for (const name of wanted) {
-    const { matches } = findPlayers(rows, name);
+  for (const word of wanted) {
+    const name = word.replace(/^@/, "");
+    const byUsername = word.startsWith("@") ? usernames.get(name.toLowerCase()) : undefined;
+    const matches =
+      byUsername !== undefined && rows.some((row) => row.userId === byUsername)
+        ? [playerById(rows, byUsername, name)]
+        : findPlayers(rows, name).matches;
     if (matches.length === 0) partners.unknown.push(name);
     else if (matches.length > 1) partners.ambiguous.push({ name, options: matches.map((player) => player.name) });
     else if (matches[0].userId !== selfId && !partners.players.some((player) => player.userId === matches[0].userId)) {

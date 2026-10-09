@@ -524,6 +524,16 @@ describe("ft", () => {
     expect(sent()).toEqual([]);
   });
 
+  it("feat @usuario encuentra a quien tiene ese usuario de Telegram", async () => {
+    const victoria = { id: 5, is_bot: false, first_name: "Victoria", username: "VictoriaAleF" };
+    const metazooa = FIXTURES.find((f) => f.id === "metazooa")!.text;
+    await post({ update_id: 101, message: message({ message_id: 101, from: victoria, text: metazooa }) });
+    fetchSpy.mockClear();
+    await post({ update_id: 1, message: message({ text: `${boludle}\nFeat @VictoriaAleF` }) });
+    expect((await rowsOf("boludle")).map((row) => row.user_name).sort()).toEqual(["Cindy", "Victoria"]);
+    expect(sentTexts()).toEqual(["🤝 Anotado también para Victoria en 🧉 Boludle"]);
+  });
+
   it("avisa si el nombre es ambiguo y no lo anota", async () => {
     await knownPlayers();
     const rafael = { id: 4, is_bot: false, first_name: "Rafael" };

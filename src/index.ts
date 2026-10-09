@@ -3,6 +3,7 @@ import type { Env } from "./env";
 import { announceMega, type MegaPerson } from "./announce";
 import { buildDetail } from "./detail";
 import { ftForBlock, ftLines, ftOnly, resolvePartners, type Partners } from "./ft";
+import { loadUsernames, rememberUsername } from "./usernames";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import type { Game } from "./games/types";
 import { choosePhoto, forgetPhoto, requestPhoto, takePhotoRequest } from "./photoStore";
@@ -174,9 +175,11 @@ async function saveResults(
   matches: Matches,
   defer: Defer,
 ): Promise<string[]> {
+  if (from.username) await rememberUsername(env.DB, from.id, from.username);
   const fts = ftLines(text);
   const rows = fts.length > 0 ? await loadResults(env.DB, message.chat.id) : [];
-  const partnersByLine = new Map(fts.map((ft) => [ft.line, resolvePartners(rows, ft.names, from.id)]));
+  const usernames = fts.length > 0 ? await loadUsernames(env.DB) : new Map<string, number>();
+  const partnersByLine = new Map(fts.map((ft) => [ft.line, resolvePartners(rows, ft.names, from.id, usernames)]));
   const notes: string[] = [];
 
   for (const match of matches) {
@@ -257,7 +260,7 @@ async function ftAfterResults(env: Env, message: TelegramMessage, text: string, 
   const last = await lastMessageResults(env.DB, message.chat.id, from.id, message.date - FT_WINDOW_SECONDS);
   if (last.length === 0) return [];
 
-  const partners = resolvePartners(await loadResults(env.DB, message.chat.id), wanted, from.id);
+  const partners = resolvePartners(await loadResults(env.DB, message.chat.id), wanted, from.id, await loadUsernames(env.DB));
   const notes: string[] = [];
   for (const stored of last) {
     const game = GAMES.find((candidate) => candidate.id === stored.game);

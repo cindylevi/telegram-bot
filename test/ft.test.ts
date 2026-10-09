@@ -9,12 +9,13 @@ describe("ftLines", () => {
     const text = "Chainle #50 · 2,811 🔗\n🟥🟧🟨\n ft Tomer, zoe y Rafa etc.\nhttps://chainle.io\nFt. @Lautaro & Facu";
     expect(ftLines(text)).toEqual([
       { line: 2, names: ["Tomer", "zoe", "Rafa"] },
-      { line: 4, names: ["Lautaro", "Facu"] },
+      { line: 4, names: ["@Lautaro", "Facu"] },
     ]);
   });
 
   it("acepta feat y no confunde palabras que empiezan con ft", () => {
     expect(ftLines("feat Rafa")).toEqual([{ line: 0, names: ["Rafa"] }]);
+    expect(ftLines("Feat @VictoriaAleF")).toEqual([{ line: 0, names: ["@VictoriaAleF"] }]);
     expect(ftLines("ftw\nsoftware ft")).toEqual([]);
   });
 });
@@ -50,6 +51,15 @@ describe("resolvePartners", () => {
       players: [{ userId: 1, name: "Rafa" }, { userId: 2, name: "Rafael" }],
       unknown: ["zoe"],
       ambiguous: [{ name: "Fran", options: ["Franco", "Francisco"] }],
+    });
+  });
+
+  it("con @ busca primero por el usuario de Telegram y si no lo conoce, por el nombre", () => {
+    const usernames = new Map([["victoriaalef", 1], ["fantasma", 99]]);
+    expect(resolvePartners(rows, ["@VictoriaAleF", "@Franco", "@fantasma"], 5, usernames)).toEqual({
+      players: [{ userId: 1, name: "Rafa" }, { userId: 3, name: "Franco" }],
+      unknown: ["fantasma"],
+      ambiguous: [],
     });
   });
 });

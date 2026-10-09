@@ -1,4 +1,4 @@
-import { createScheduledController, env } from "cloudflare:test";
+import { createExecutionContext, createScheduledController, env, waitOnExecutionContext } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import type { Env } from "../src/env";
 import { commandName, GAMES } from "../src/games";
@@ -40,16 +40,20 @@ function message(overrides: Partial<TelegramMessage> = {}): TelegramMessage {
   };
 }
 
-// Los handlers no usan ctx, así que se llaman solo con (request, env).
-function post(update: TelegramUpdate, secret = "test-secret") {
-  return worker.fetch(
+// Los avisos que tardan (la foto del MEGA) corren en ctx.waitUntil: se espera a que terminen.
+async function post(update: TelegramUpdate, secret = "test-secret") {
+  const ctx = createExecutionContext();
+  const response = await worker.fetch(
     new IncomingRequest("https://bot.test/webhook", {
       method: "POST",
       headers: { "X-Telegram-Bot-Api-Secret-Token": secret, "content-type": "application/json" },
       body: JSON.stringify(update),
     }),
     testEnv,
+    ctx,
   );
+  await waitOnExecutionContext(ctx);
+  return response;
 }
 
 async function storedRows() {
@@ -152,12 +156,13 @@ describe("webhook", () => {
         body: "no es json",
       }),
       testEnv,
+      createExecutionContext(),
     );
     expect(response.status).toBe(200);
   });
 
   it("devuelve 404 fuera de POST /webhook", async () => {
-    const response = await worker.fetch(new IncomingRequest("https://bot.test/"), testEnv);
+    const response = await worker.fetch(new IncomingRequest("https://bot.test/"), testEnv, createExecutionContext());
     expect(response.status).toBe(404);
   });
 });
@@ -165,25 +170,32 @@ describe("webhook", () => {
 describe("aviso de matchi matchi", () => {
   const rafa = { id: 2, is_bot: false, first_name: "Rafa" };
   const juan = { id: 3, is_bot: false, first_name: "Juan" };
+  const otraGrilla = boludle.replace("⬜🟨⬜⬜🟨", "🟨⬜⬜⬜🟨");
 
-  it("avisa en el grupo cuando dos personas mandan el mismo resultado", async () => {
+  it("misma grilla y mismo puntaje es MEGA", async () => {
     await post({ update_id: 1, message: message() });
     expect(sent()).toEqual([]);
     await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
-    expect(sent()).toEqual([{ chat_id: CHAT, text: "👯 ¡Cindy y Rafa hicieron matchi matchi en 🧉 Boludle!" }]);
+    expect(sentTexts()).toEqual(["💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!"]);
   });
 
-  it("vuelve a avisar con todos cuando se suma otra persona", async () => {
+  it("mismo puntaje con otra grilla es matchi matchi común", async () => {
     await post({ update_id: 1, message: message() });
-    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otraGrilla }) });
+    expect(sentTexts()).toEqual(["👯 ¡Cindy y Rafa hicieron matchi matchi en 🧉 Boludle!"]);
+  });
+
+  it("si se suma alguien vuelve a avisar con los del MEGA", async () => {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otraGrilla }) });
     await post({ update_id: 3, message: message({ message_id: 3, from: juan }) });
-    expect(sentTexts().at(-1)).toBe("👯 ¡Cindy, Rafa y Juan hicieron matchi matchi en 🧉 Boludle!");
+    expect(sentTexts().at(-1)).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy y Juan en 🧉 Boludle!");
   });
 
-  it("no avisa si la grilla es distinta ni si reenvían el mismo resultado", async () => {
-    const otro = boludle.replace("⬜🟨⬜⬜🟨", "🟨⬜⬜⬜🟨");
+  it("no avisa si el puntaje es distinto ni si reenvían el mismo resultado", async () => {
+    const otroPuntaje = boludle.replace("#1683 4/6", "#1683 5/6");
     await post({ update_id: 1, message: message() });
-    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otro }) });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otroPuntaje }) });
     await post({ update_id: 3, message: message({ message_id: 3 }) });
     expect(sent()).toEqual([]);
   });
@@ -450,7 +462,8 @@ describe("ft", () => {
     await post({ update_id: 2, message: message({ message_id: 2, text: `${boludle}\nft Rafa` }) });
     const { results } = await env.DB.prepare("SELECT user_name, pattern FROM results WHERE game = 'boludle' AND user_id = 2").all();
     expect(results).toEqual([{ user_name: "Rafa", pattern: expect.stringContaining("🟨⬜⬜⬜🟨") }]);
-    expect(sent()).toEqual([]);
+    // El de Rafa es de otro mensaje: mismo puntaje con otra grilla es matchi matchi común.
+    expect(sentTexts()).toEqual(["👯 ¡Rafa y Cindy hicieron matchi matchi en 🧉 Boludle!"]);
   });
 
   it("no hay matchi matchi dentro del ft, pero sí con alguien de afuera", async () => {
@@ -458,7 +471,7 @@ describe("ft", () => {
     await post({ update_id: 1, message: message({ message_id: 1, text: `${boludle}\nft Rafa` }) });
     expect(sentTexts()).toEqual(["🤝 Anotado también para Rafa en 🧉 Boludle"]);
     await post({ update_id: 2, message: message({ message_id: 2, from: tomer }) });
-    expect(sentTexts().at(-1)).toBe("👯 ¡Cindy, Rafa y Tomer hicieron matchi matchi en 🧉 Boludle!");
+    expect(sentTexts().at(-1)).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy, Rafa y Tomer en 🧉 Boludle!");
   });
 
   it("el ft en el mensaje siguiente tampoco es matchi matchi en el resumen", async () => {

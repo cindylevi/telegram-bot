@@ -1,3 +1,5 @@
+import { hasMega } from "./games";
+
 export interface StoredResult {
   userId: number;
   userName: string;
@@ -58,29 +60,31 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<boo
   return meta.changes > 0;
 }
 
-// Quienes ya mandaron el resultado idéntico en el mismo puzzle y día: mismo puntaje exacto
-// y, si el juego trae grilla, también la misma grilla. Los del mismo ft (mismo mensaje) no cuentan.
-export async function findTwins(db: D1Database, result: NewResult): Promise<{ userId: number; userName: string }[]> {
+export interface Twin {
+  userId: number;
+  userName: string;
+  mega: boolean;
+}
+
+// Quienes ya mandaron el mismo puntaje en el mismo puzzle y día; MEGA si además coincide el detalle.
+// Los del mismo ft (mismo mensaje) no cuentan.
+export async function findTwins(db: D1Database, result: NewResult): Promise<Twin[]> {
   if (result.pattern === null) return [];
   const { results } = await db
     .prepare(
-      `SELECT user_id, user_name FROM results
+      `SELECT user_id, user_name, pattern FROM results
        WHERE chat_id = ? AND game = ? AND puzzle = ? AND day = ? AND user_id <> ? AND message_id <> ?
-         AND pattern = ? AND display = ?
+         AND display = ? AND pattern IS NOT NULL
        ORDER BY created_at, id`,
     )
-    .bind(
-      result.chatId,
-      result.game,
-      result.puzzle,
-      result.day,
-      result.userId,
-      result.messageId,
-      result.pattern,
-      result.display,
-    )
-    .all<{ user_id: number; user_name: string }>();
-  return results.map((row) => ({ userId: row.user_id, userName: row.user_name }));
+    .bind(result.chatId, result.game, result.puzzle, result.day, result.userId, result.messageId, result.display)
+    .all<{ user_id: number; user_name: string; pattern: string }>();
+  const megaPossible = result.pattern !== "" && hasMega(result.game);
+  return results.map((row) => ({
+    userId: row.user_id,
+    userName: row.user_name,
+    mega: megaPossible && row.pattern === result.pattern,
+  }));
 }
 
 // Los resultados del último mensaje con resultados de esa persona, si lo mandó desde `since`.

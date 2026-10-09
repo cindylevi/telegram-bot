@@ -1,10 +1,11 @@
 import { dayInArgentina, gameDay } from "./date";
 import type { Env } from "./env";
+import { announceMega, type MegaPerson } from "./announce";
 import { buildDetail } from "./detail";
 import { ftForBlock, ftLines, ftOnly, resolvePartners, type Partners } from "./ft";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import type { Game } from "./games/types";
-import { buildProfile, findPlayers, playerById } from "./profile";
+import { buildProfile, findPlayers, playerById, type Player } from "./profile";
 import { findTwins, lastMessageResults, loadResults, saveResult, type NewResult, type StoredResult } from "./store";
 import { buildSummary, joinNames } from "./summary";
 import { isChatMember, sendMessage, type TelegramMessage, type TelegramUpdate, type TelegramUser } from "./telegram";
@@ -67,7 +68,9 @@ function personDetail(rows: StoredResult[], message: TelegramMessage, from: Tele
   return show(matches[0].userId, matches[0].name);
 }
 
-async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
+type Defer = (task: Promise<void>) => void;
+
+async function handleUpdate(update: TelegramUpdate, env: Env, defer: Defer): Promise<void> {
   const message = update.message;
   if (!message) return;
 
@@ -136,14 +139,20 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
 
   const matches = parseResults(message.text);
   const notes =
-    matches.length > 0 ? await saveResults(env, message, message.from, matches) : await ftAfterResults(env, message, message.from);
+    matches.length > 0 ? await saveResults(env, message, message.from, matches, defer) : await ftAfterResults(env, message, message.from);
   if (notes.length > 0) await reply(notes.join("\n"));
 }
 
 type Matches = ReturnType<typeof parseResults>;
 
 // Guarda los resultados del mensaje, también para quienes nombra cada ft, y devuelve lo que hay que contestar.
-async function saveResults(env: Env, message: TelegramMessage, from: TelegramUser, matches: Matches): Promise<string[]> {
+async function saveResults(
+  env: Env,
+  message: TelegramMessage,
+  from: TelegramUser,
+  matches: Matches,
+  defer: Defer,
+): Promise<string[]> {
   const fts = ftLines(message.text!);
   const rows = fts.length > 0 ? await loadResults(env.DB, message.chat.id) : [];
   const partnersByLine = new Map(fts.map((ft) => [ft.line, resolvePartners(rows, ft.names, from.id)]));
@@ -169,11 +178,19 @@ async function saveResults(env: Env, message: TelegramMessage, from: TelegramUse
     const ft = ftForBlock(fts, match.line);
     const partners = ft ? partnersByLine.get(ft.line)!.players : [];
     const shared = await shareResult(env, result, partners);
-    if (shared.length > 0) notes.push(sharedNote(shared, match.game));
+    if (shared.length > 0) notes.push(sharedNote(shared.map((player) => player.name), match.game));
 
     const twins = await findTwins(env.DB, result);
-    if (twins.length > 0) {
-      const names = joinNames([...twins.map((twin) => twin.userName), result.userName, ...shared]);
+    const mega = twins.filter((twin) => twin.mega);
+    const us: MegaPerson[] = [{ userId: result.userId, name: result.userName }, ...shared.map((p) => ({ userId: p.userId, name: p.name }))];
+    if (mega.length > 0) {
+      const people = [...mega.map((twin) => ({ userId: twin.userId, name: twin.userName })), ...us];
+      // La foto tarda: se manda después de contestarle a Telegram.
+      defer(
+        announceMega(env, message.chat.id, match.game, people).catch((error) => console.error("aviso del MEGA", error)),
+      );
+    } else if (twins.length > 0) {
+      const names = joinNames([...twins.map((twin) => twin.userName), ...us.map((person) => person.name)]);
       await sendMessage(env.BOT_TOKEN, message.chat.id, `👯 ¡${names} hicieron matchi matchi en ${match.game.emoji} ${match.game.name}!`);
     }
   }
@@ -195,16 +212,16 @@ async function ftAfterResults(env: Env, message: TelegramMessage, from: Telegram
     const game = GAMES.find((candidate) => candidate.id === stored.game);
     if (!game) continue;
     const shared = await shareResult(env, { ...stored, chatId: message.chat.id }, partners.players);
-    if (shared.length > 0) notes.push(sharedNote(shared, game));
+    if (shared.length > 0) notes.push(sharedNote(shared.map((player) => player.name), game));
   }
   return [...notes, ...missingNotes(partners)];
 }
 
 // Copia el resultado a cada compañero; si alguien ya tenía el suyo de ese puzzle, vale el suyo.
-async function shareResult(env: Env, result: NewResult, partners: Partners["players"]): Promise<string[]> {
-  const shared: string[] = [];
+async function shareResult(env: Env, result: NewResult, partners: Player[]): Promise<Player[]> {
+  const shared: Player[] = [];
   for (const partner of partners) {
-    if (await saveResult(env.DB, { ...result, userId: partner.userId, userName: partner.name })) shared.push(partner.name);
+    if (await saveResult(env.DB, { ...result, userId: partner.userId, userName: partner.name })) shared.push(partner);
   }
   return shared;
 }
@@ -225,7 +242,7 @@ function missingNotes(partners: Partners): string[] {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (request.method !== "POST" || url.pathname !== "/webhook") {
       return new Response("not found", { status: 404 });
@@ -234,7 +251,7 @@ export default {
       return new Response("unauthorized", { status: 401 });
     }
     try {
-      await handleUpdate(await request.json<TelegramUpdate>(), env);
+      await handleUpdate(await request.json<TelegramUpdate>(), env, (task) => ctx.waitUntil(task));
     } catch (error) {
       console.error("webhook error", error);
     }

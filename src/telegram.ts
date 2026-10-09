@@ -11,6 +11,10 @@ export interface TelegramMessage {
   chat: { id: number; type?: string };
   from?: TelegramUser;
   text?: string;
+  // Telegram manda la misma foto en varios tamaños, de menor a mayor.
+  photo?: { file_id: string; width: number; height: number }[];
+  caption?: string;
+  document?: { file_id: string; mime_type?: string };
   reply_to_message?: TelegramMessage;
   migrate_to_chat_id?: number;
   migrate_from_chat_id?: number;

@@ -250,7 +250,7 @@ describe("/help", () => {
     await post({ update_id: 1, message: message({ text: "/help@StatsReseteoBot" }) });
     expect(sentTexts()).toHaveLength(1);
     const lines = sentTexts()[0].split("\n");
-    for (const command of ["/resumen", "/listdles", "/detalle", "/help"]) {
+    for (const command of ["/resumen", "/listdles", "/detalle", "/mifoto", "/help"]) {
       expect(sentTexts()[0]).toContain(command);
     }
     for (const game of GAMES) {
@@ -481,5 +481,61 @@ describe("ft", () => {
     await post({ update_id: 3, message: message({ message_id: 3, date: DATE + 120, text: "/resumen" }) });
     expect(sentTexts().at(-1)).toContain("🥇 Cindy y Rafa — 4/6");
     expect(sentTexts().at(-1)).not.toContain("matchi matchi: Cindy y Rafa");
+  });
+});
+
+describe("/mifoto", () => {
+  const privado = { id: 42, type: "private" };
+  const foto = [
+    { file_id: "chica", width: 90, height: 90 },
+    { file_id: "grande", width: 640, height: 640 },
+  ];
+  const elegida = async () => (await env.DB.prepare("SELECT file_id FROM user_photos WHERE user_id = 42").first())?.file_id;
+
+  it("una foto con /mifoto de epígrafe queda elegida", async () => {
+    await post({ update_id: 1, message: message({ chat: privado, text: undefined, caption: "/mifoto", photo: foto }) });
+    expect(await elegida()).toBe("grande");
+    expect(sentTexts()).toEqual(["Listo, esa es tu foto para los mega 💖"]);
+  });
+
+  it("/mifoto y después la foto, dentro de los 10 minutos", async () => {
+    await post({ update_id: 1, message: message({ chat: privado, text: "/mifoto" }) });
+    await post({ update_id: 2, message: message({ message_id: 2, chat: privado, date: DATE + 60, text: undefined, photo: foto }) });
+    expect(await elegida()).toBe("grande");
+    expect(sentTexts()).toEqual(["Mandame la foto que querés usar en los mega 💖", "Listo, esa es tu foto para los mega 💖"]);
+  });
+
+  it("una foto suelta, sin pedido o pasados los 10 minutos, se ignora", async () => {
+    await post({ update_id: 1, message: message({ chat: privado, text: "/mifoto" }) });
+    await post({ update_id: 2, message: message({ message_id: 2, chat: privado, date: DATE + 601, text: undefined, photo: foto }) });
+    expect(await elegida()).toBeUndefined();
+    expect(sentTexts()).toEqual(["Mandame la foto que querés usar en los mega 💖"]);
+  });
+
+  it("/mifoto borrar vuelve a la foto de perfil", async () => {
+    await post({ update_id: 1, message: message({ chat: privado, text: undefined, caption: "/mifoto", photo: foto }) });
+    await post({ update_id: 2, message: message({ message_id: 2, chat: privado, text: "/mifoto borrar" }) });
+    expect(await elegida()).toBeUndefined();
+    expect(sentTexts().at(-1)).toBe("Listo, vuelvo a usar tu foto de perfil.");
+  });
+
+  it("si la manda como archivo, avisa que la mande como foto", async () => {
+    await post({ update_id: 1, message: message({ chat: privado, text: "/mifoto" }) });
+    const document = { file_id: "archivo", mime_type: "image/jpeg" };
+    await post({ update_id: 2, message: message({ message_id: 2, chat: privado, text: undefined, document }) });
+    expect(await elegida()).toBeUndefined();
+    expect(sentTexts().at(-1)).toBe("Mandala como foto, no como archivo 🙏");
+  });
+
+  it("en el grupo explica que es por privado", async () => {
+    await post({ update_id: 1, message: message({ text: "/mifoto" }) });
+    expect(sentTexts()).toEqual(["La foto se cambia por privado: escribime a mí 😉"]);
+  });
+
+  it("rechaza a quien no es del grupo", async () => {
+    memberStatus = "left";
+    await post({ update_id: 1, message: message({ chat: privado, text: undefined, caption: "/mifoto", photo: foto }) });
+    expect(await elegida()).toBeUndefined();
+    expect(sentTexts()).toEqual(["Este bot es solo para los miembros del grupo."]);
   });
 });

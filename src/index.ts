@@ -5,6 +5,7 @@ import { buildDetail } from "./detail";
 import { ftForBlock, ftLines, ftOnly, resolvePartners, type Partners } from "./ft";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import type { Game } from "./games/types";
+import { choosePhoto, forgetPhoto, requestPhoto, takePhotoRequest } from "./photoStore";
 import { buildProfile, findPlayers, playerById, type Player } from "./profile";
 import { findTwins, lastMessageResults, loadResults, saveResult, type NewResult, type StoredResult } from "./store";
 import { buildSummary, joinNames } from "./summary";
@@ -15,6 +16,8 @@ const LIST_COMMAND = /^\/listdles(@\w+)?(\s|$)/i;
 const DETAIL_COMMAND = /^\/([a-z0-9]+)detalle(@\w+)?(\s|$)/i;
 const HELP_COMMAND = /^\/(help|start)(@\w+)?(\s|$)/i;
 const PERSON_COMMAND = /^\/detalle(@\w+)?(?:\s+([\s\S]+))?$/i;
+const MY_PHOTO_COMMAND = /^\/mifoto(@\w+)?(?:\s+(\S+))?\s*$/i;
+const PHOTO_REQUEST_SECONDS = 600;
 
 const HELP = [
   "🤖 Comandos",
@@ -22,6 +25,7 @@ const HELP = [
   "/resumen — el resumen de hoy hasta ahora",
   "/listdles — los juegos que reconozco, con su link",
   "/detalle <nombre> — partidas, oros, récords, matchi matchi y qué le falta jugar hoy a alguien (sin nombre, el tuyo; también respondiendo a un mensaje suyo)",
+  "/mifoto — por privado, elegí la foto que uso para vos en los MEGA matchi matchi (/mifoto borrar vuelve a la de perfil)",
   "/help — esta ayuda",
   "",
   "📊 Detalle de cada juego (ranking de hoy, récords y rachas)",
@@ -88,7 +92,11 @@ async function handleUpdate(update: TelegramUpdate, env: Env, defer: Defer): Pro
     console.warn(`mensaje de un chat desconocido: ${message.chat.id}${origin}`);
     return;
   }
-  if (!message.text || !message.from || message.from.is_bot) return;
+  if (!message.from || message.from.is_bot) return;
+  // Las fotos traen el texto en el epígrafe.
+  const text = message.text ?? message.caption ?? "";
+  const hasImage = Boolean(message.photo || message.document?.mime_type?.startsWith("image/"));
+  if (!text && !hasImage) return;
 
   const day = dayInArgentina(message.date);
   const groupId = Number(env.GROUP_CHAT_ID);
@@ -101,30 +109,41 @@ async function handleUpdate(update: TelegramUpdate, env: Env, defer: Defer): Pro
     return;
   }
 
-  if (SUMMARY_COMMAND.test(message.text)) {
+  const myPhoto = text.match(MY_PHOTO_COMMAND);
+  if (myPhoto && !isPrivate) {
+    await reply("La foto se cambia por privado: escribime a mí 😉");
+    return;
+  }
+  if (isPrivate && (myPhoto || hasImage)) {
+    const answer = await photoCommand(env, message, message.from, myPhoto !== null, myPhoto?.[2]);
+    if (answer) await reply(answer);
+    return;
+  }
+
+  if (SUMMARY_COMMAND.test(text)) {
     const summary = buildSummary(await loadResults(env.DB, groupId), day);
     await reply(summary ?? "Hoy todavía no jugó nadie.");
     return;
   }
 
-  if (HELP_COMMAND.test(message.text)) {
+  if (HELP_COMMAND.test(text)) {
     await reply(HELP);
     return;
   }
 
-  if (LIST_COMMAND.test(message.text)) {
+  if (LIST_COMMAND.test(text)) {
     await reply(listGames());
     return;
   }
 
-  const person = message.text.match(PERSON_COMMAND);
+  const person = text.match(PERSON_COMMAND);
   if (person) {
     const rows = await loadResults(env.DB, groupId);
     await reply(personDetail(rows, message, message.from, person[2]?.trim(), day));
     return;
   }
 
-  const detail = message.text.match(DETAIL_COMMAND);
+  const detail = text.match(DETAIL_COMMAND);
   if (detail) {
     const game = gameByCommand(detail[1]);
     if (game) await reply(buildDetail(await loadResults(env.DB, groupId), game, gameDay(game, message.date)));
@@ -133,13 +152,13 @@ async function handleUpdate(update: TelegramUpdate, env: Env, defer: Defer): Pro
 
   // Los resultados solo cuentan si se mandan en el grupo, a la vista de todos.
   if (isPrivate) {
-    if (parseResults(message.text).length > 0) await reply("Los resultados mandalos en el grupo así cuentan 😉");
+    if (parseResults(text).length > 0) await reply("Los resultados mandalos en el grupo así cuentan 😉");
     return;
   }
 
-  const matches = parseResults(message.text);
+  const matches = parseResults(text);
   const notes =
-    matches.length > 0 ? await saveResults(env, message, message.from, matches, defer) : await ftAfterResults(env, message, message.from);
+    matches.length > 0 ? await saveResults(env, message, text, message.from, matches, defer) : await ftAfterResults(env, message, text, message.from);
   if (notes.length > 0) await reply(notes.join("\n"));
 }
 
@@ -149,11 +168,12 @@ type Matches = ReturnType<typeof parseResults>;
 async function saveResults(
   env: Env,
   message: TelegramMessage,
+  text: string,
   from: TelegramUser,
   matches: Matches,
   defer: Defer,
 ): Promise<string[]> {
-  const fts = ftLines(message.text!);
+  const fts = ftLines(text);
   const rows = fts.length > 0 ? await loadResults(env.DB, message.chat.id) : [];
   const partnersByLine = new Map(fts.map((ft) => [ft.line, resolvePartners(rows, ft.names, from.id)]));
   const notes: string[] = [];
@@ -197,11 +217,35 @@ async function saveResults(
   return [...notes, ...[...partnersByLine.values()].flatMap(missingNotes)];
 }
 
+async function photoCommand(
+  env: Env,
+  message: TelegramMessage,
+  from: TelegramUser,
+  isCommand: boolean,
+  argument: string | undefined,
+): Promise<string | null> {
+  if (argument?.toLowerCase() === "borrar") {
+    await forgetPhoto(env.DB, from.id);
+    return "Listo, vuelvo a usar tu foto de perfil.";
+  }
+  const largest = message.photo?.at(-1)?.file_id;
+  if (largest && (isCommand || (await takePhotoRequest(env.DB, from.id, message.date - PHOTO_REQUEST_SECONDS)))) {
+    await choosePhoto(env.DB, from.id, largest, message.date);
+    return "Listo, esa es tu foto para los mega 💖";
+  }
+  if (message.document) return "Mandala como foto, no como archivo 🙏";
+  if (isCommand) {
+    await requestPhoto(env.DB, from.id, message.date);
+    return "Mandame la foto que querés usar en los mega 💖";
+  }
+  return null;
+}
+
 const FT_WINDOW_SECONDS = 600;
 
 // Un mensaje que es solo un ft suma a los nombrados al último resultado de la misma persona, si es reciente.
-async function ftAfterResults(env: Env, message: TelegramMessage, from: TelegramUser): Promise<string[]> {
-  const wanted = ftOnly(message.text!);
+async function ftAfterResults(env: Env, message: TelegramMessage, text: string, from: TelegramUser): Promise<string[]> {
+  const wanted = ftOnly(text);
   if (!wanted) return [];
   const last = await lastMessageResults(env.DB, message.chat.id, from.id, message.date - FT_WINDOW_SECONDS);
   if (last.length === 0) return [];

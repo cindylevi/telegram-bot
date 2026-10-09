@@ -16,6 +16,7 @@
 - El token del bot vive en `.dev.vars`; nunca imprimirlo. Las URLs `https://api.telegram.org/file/bot<token>/…` nunca salen del Worker.
 - Plan gratis de Workers: 10 ms de CPU por request (esperar un `fetch` o el render no cuenta) y 10 minutos de navegador por día.
 - `quickAction` requiere `compatibility_date` `2026-03-24` o posterior.
+- Prototipo aprobado, en `.mega-prototype/` (ignorada por git en `.git/info/exclude`, no se commitea porque tiene la foto de Rafa): `mega.html` y `v8.png` (diseño final), `foca.jpg` (foca recortada) y `rafa.jpg` (foto de prueba). `$SCRATCH` = el scratchpad de la sesión, para lo descartable.
 - Textos del bot en castellano rioplatense, con el tono de los mensajes existentes.
 - Comentarios en el código: en castellano, cortos, explicando el porqué, como el resto del repo.
 - Imagen: 1080 × 1080; "MEGA" en Bungee y "Matchi Matchi" en Lobster con relleno de brillitos; corazón dividido en franjas verticales (máximo 6); ocho focas fijas y asimétricas dentro del lienzo.
@@ -47,7 +48,7 @@ Confirmar, antes de escribir código del bot, que `quickAction("screenshot")` ac
 
 - [ ] **Step 1: Armar el Worker de prueba**
 
-`$SCRATCH` es el scratchpad de la sesión. `index.ts` recibe el HTML por POST y devuelve la captura:
+`$SCRATCH` es el scratchpad de la sesión que ejecuta el plan; los archivos del prototipo están en `.mega-prototype/` (ver Global Constraints). `index.ts` recibe el HTML por POST y devuelve la captura:
 
 ```ts
 export default {
@@ -80,7 +81,7 @@ Run:
 
 ```bash
 cd $SCRATCH/mega-spike && npx -y wrangler@4.139.0 deploy
-curl -s -X POST --data-binary @$SCRATCH/mega/mega.html https://mega-spike.<subdominio>.workers.dev -o $SCRATCH/mega/spike.png -w '%{http_code} %{size_download}\n'
+curl -s -X POST --data-binary @.mega-prototype/mega.html https://mega-spike.<subdominio>.workers.dev -o .mega-prototype/spike.png -w '%{http_code} %{size_download}\n'
 ```
 
 Expected: `200` y un PNG de más de 100 KB. Mirarlo con Read: tiene que verse igual que `v8.png` (tipografías Bungee y Lobster cargadas). Anotar si los emojis ✨💖 se ven o salen como cuadraditos (confirma la decisión de dibujarlos con SVG).
@@ -806,10 +807,10 @@ git commit -m "feat: avisar MEGA matchi matchi aparte del matchi matchi común"
 
 - [ ] **Step 1: Generar la foca embebida**
 
-La foca recortada (sin el "cream blush") está en `$SCRATCH/mega/foca.jpg`.
+La foca recortada (sin el "cream blush") está en `.mega-prototype/foca.jpg`.
 
 ```bash
-printf '// La foca de los MEGA matchi matchi (recortada, sin el texto de la foto original).\nexport const FOCA =\n  "data:image/jpeg;base64,%s";\n' "$(base64 -i $SCRATCH/mega/foca.jpg | tr -d '\n')" > src/assets/foca.ts
+printf '// La foca de los MEGA matchi matchi (recortada, sin el texto de la foto original).\nexport const FOCA =\n  "data:image/jpeg;base64,%s";\n' "$(base64 -i .mega-prototype/foca.jpg | tr -d '\n')" > src/assets/foca.ts
 head -c 200 src/assets/foca.ts
 ```
 
@@ -987,7 +988,7 @@ const photo = `data:image/jpeg;base64,${readFileSync(rafa).toString("base64")}`;
 writeFileSync(out, megaHtml([{ name: "Rafa", photo }, { name: "WinnaZ", photo: null }]));
 ```
 
-Run: `npx -y tsx $SCRATCH/tools/preview.ts $SCRATCH/mega/rafa.jpg $SCRATCH/mega/final.html`, y capturar con `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --window-size=1080,1080 --virtual-time-budget=5000 --user-data-dir=$SCRATCH/mega/chrome-profile --screenshot=$SCRATCH/mega/final.png file://$SCRATCH/mega/final.html` (cortar el proceso con `pkill -f chrome-profile` cuando aparezca el archivo). Comparar con `v8.png` con Read: misma composición, con corazones y destellos SVG en lugar de emojis.
+Run: `npx -y tsx $SCRATCH/tools/preview.ts .mega-prototype/rafa.jpg .mega-prototype/final.html`, y capturar con `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --window-size=1080,1080 --virtual-time-budget=5000 --user-data-dir=.mega-prototype/chrome-profile --screenshot=.mega-prototype/final.png file://.mega-prototype/final.html` (cortar el proceso con `pkill -f chrome-profile` cuando aparezca el archivo). Comparar con `v8.png` con Read: misma composición, con corazones y destellos SVG en lugar de emojis.
 
 - [ ] **Step 7: Commit**
 

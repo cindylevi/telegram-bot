@@ -323,6 +323,15 @@ describe("matchi matchi", () => {
     expect(twinGroups(rows, "boludle", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
   });
 
+  it("en Minute Cryptic solo cuenta el MEGA: mismas pistas, grilla y tiempo", () => {
+    const rows = [
+      play(1, "Cindy", "minute-cryptic", D, "1 pista", "⚪️🟣🟣\n2m 5s"),
+      play(2, "Rafa", "minute-cryptic", D, "1 pista", "⚪️🟣🟣\n2m 5s"),
+      play(3, "Tomer", "minute-cryptic", D, "1 pista", "⚪️🟣🟣\n3m 1s"),
+    ];
+    expect(twinGroups(rows, "minute-cryptic", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
+  });
+
   it("en la Trivia solo hay común aunque la grilla sea igual", () => {
     const rows = [play(1, "Cindy", "trivia", D, "5/7", "🟩🟩🟥"), play(2, "Rafa", "trivia", D, "5/7", "🟩🟩🟥")];
     expect(twinGroups(rows, "trivia", D)).toEqual({ mega: [], common: [["Cindy", "Rafa"]] });

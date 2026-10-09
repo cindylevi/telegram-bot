@@ -12,6 +12,7 @@ export const minuteCryptic: Game = {
   emoji: "🧩",
   url: "https://www.minutecryptic.com",
   direction: "lower",
+  common: false,
   parse(text) {
     if (!/minutecryptic\.com/i.test(text)) return null;
     const match = text.match(RESULT);

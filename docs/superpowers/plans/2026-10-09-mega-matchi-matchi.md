@@ -988,7 +988,7 @@ const photo = `data:image/jpeg;base64,${readFileSync(rafa).toString("base64")}`;
 writeFileSync(out, megaHtml([{ name: "Rafa", photo }, { name: "WinnaZ", photo: null }]));
 ```
 
-Run: `npx -y tsx $SCRATCH/tools/preview.ts .mega-prototype/rafa.jpg .mega-prototype/final.html`, y capturar con `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --window-size=1080,1080 --virtual-time-budget=5000 --user-data-dir=.mega-prototype/chrome-profile --screenshot=.mega-prototype/final.png file://.mega-prototype/final.html` (cortar el proceso con `pkill -f chrome-profile` cuando aparezca el archivo). Comparar con `v8.png` con Read: misma composición, con corazones y destellos SVG en lugar de emojis.
+Run: `npx -y tsx $SCRATCH/tools/preview.ts .mega-prototype/rafa.jpg .mega-prototype/final.html`, y capturar con `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --window-size=1080,1080 --virtual-time-budget=5000 --user-data-dir=.mega-prototype/chrome-profile --screenshot=.mega-prototype/final.png file://$PWD/.mega-prototype/final.html` (cortar el proceso con `pkill -f chrome-profile` cuando aparezca el archivo). Comparar con `v8.png` con Read: misma composición, con corazones y destellos SVG en lugar de emojis.
 
 - [ ] **Step 7: Commit**
 

@@ -7,6 +7,7 @@ export const trivia: Game = {
   emoji: "🎓",
   url: "https://latriviadeldia.com",
   direction: "higher",
+  mega: false,
   parse(text) {
     const match = text.match(
       /latriviadeldia\.com[^\n]*\n\s*(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})\s*\n(?:[^\n]*\n){0,2}?\s*(\d+)\s*\/\s*(\d+)[ \t]*(?:\n|$)/i,

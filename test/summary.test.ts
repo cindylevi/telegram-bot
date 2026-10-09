@@ -92,17 +92,17 @@ describe("buildSummary", () => {
     expect(buildSummary(rows, D)).toContain("🎮 Más jugado: 4x3 y Boludle (1 persona)");
   });
 
-  it("muestra los matchi matchi de cada juego", () => {
-    const trivia = (userId: number, userName: string, pattern: string) =>
-      result({ userId, userName, game: "trivia", day: D, pattern, display: "2/3" });
+  it("muestra los MEGA y los matchi matchi de cada juego", () => {
+    const boludle = (userId: number, userName: string, display: string, pattern: string) =>
+      result({ userId, userName, game: "boludle", day: D, display, pattern });
     const rows = [
-      trivia(1, "Cindy", "🟩🟩🟥"),
-      trivia(2, "Rafa", "🟩🟩🟥"),
-      trivia(3, "Lu", "🟩🟥🟩"),
-      trivia(4, "Juan", "🟩🟥🟩"),
-      trivia(5, "Ana", "🟥🟩🟩"),
+      boludle(1, "Cindy", "4/6", "🟩🟩🟥"),
+      boludle(2, "Rafa", "4/6", "🟩🟩🟥"),
+      boludle(3, "Lu", "4/6", "🟩🟥🟩"),
+      boludle(4, "Juan", "5/6", "🟩🟥🟩"),
     ];
-    expect(buildSummary(rows, D)).toContain("   👯 Matchi matchi (Twinning): Cindy y Rafa · Lu y Juan");
+    const summary = buildSummary(rows, D)!;
+    expect(summary).toContain("   💖 MEGA matchi matchi: Cindy y Rafa\n   👯 Matchi matchi: Cindy, Rafa y Lu");
   });
 
   it("devuelve null si ese día no jugó nadie", () => {

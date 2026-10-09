@@ -38,6 +38,10 @@ export function gameByCommand(name: string): Game | undefined {
   return GAMES.find((game) => commandName(game) === name.toLowerCase());
 }
 
+export function hasMega(gameId: string): boolean {
+  return GAMES.find((game) => game.id === gameId)?.mega !== false;
+}
+
 export function listGames(): string {
   const lines = GAMES.map((game) => `${game.emoji} ${game.name} — ${game.url} · /${commandName(game)}detalle`);
   return [`🎮 Juegos que reconozco (${GAMES.length})`, "", ...lines].join("\n");

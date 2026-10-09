@@ -1,4 +1,5 @@
 import { previousDay } from "./date";
+import { hasMega } from "./games";
 import type { Direction } from "./games/types";
 import type { StoredResult } from "./store";
 
@@ -264,10 +265,14 @@ export function goldMedals(valid: StoredResult[], game: string, direction: Direc
   return medals;
 }
 
-// Clave para comparar resultados idénticos: el puntaje exacto más la grilla (vacía si el juego no trae).
-// null = resultado guardado antes de que se guardara la grilla: no se compara.
-function twinKey(row: StoredResult): string | null {
-  if (row.pattern === null) return null;
+// Matchi matchi: el mismo resultado. null = guardado antes de que existiera la grilla: no se compara.
+function matchKey(row: StoredResult): string | null {
+  return row.pattern === null ? null : row.display;
+}
+
+// MEGA: además el mismo detalle (grilla o rondas), en los juegos que lo admiten.
+function megaKey(row: StoredResult): string | null {
+  if (row.pattern === null || row.pattern === "" || !hasMega(row.game)) return null;
   return `${row.pattern}=${row.display}`;
 }
 
@@ -280,48 +285,63 @@ function latestNames(valid: StoredResult[]): Map<number, string> {
   return new Map([...names].map(([userId, { name }]) => [userId, name]));
 }
 
-// Quienes tienen el resultado idéntico en un juego un día. Un ft solo (todos del mismo mensaje)
-// no es matchi matchi: hace falta al menos un resultado de otro mensaje.
-export function twinGroups(valid: StoredResult[], game: string, day: string): string[][] {
-  const names = latestNames(valid);
+// Grupos con la misma clave. Un ft solo (todos del mismo mensaje) no cuenta: hace falta otro mensaje.
+function groupsBy(rows: StoredResult[], key: (row: StoredResult) => string | null): StoredResult[][] {
   const groups = new Map<string, StoredResult[]>();
-  for (const row of valid) {
-    const key = row.game === game && row.day === day ? twinKey(row) : null;
-    if (key === null) continue;
-    groups.set(key, [...(groups.get(key) ?? []), row]);
+  for (const row of rows) {
+    const value = key(row);
+    if (value !== null) groups.set(value, [...(groups.get(value) ?? []), row]);
   }
-  return [...groups.values()]
-    .filter((rows) => new Set(rows.map((row) => row.messageId)).size > 1)
-    .map((rows) => rows.map((row) => names.get(row.userId)!));
+  return [...groups.values()].filter((group) => new Set(group.map((row) => row.messageId)).size > 1);
 }
 
-// Con quién coincidió cada resultado de una persona: [otra persona, juego, día].
-function coincidences(valid: StoredResult[], userId: number, day?: string): { userId: number; game: string }[] {
-  const found: { userId: number; game: string }[] = [];
+// Quienes coincidieron en un juego un día. Un común que es exactamente un MEGA se muestra solo como MEGA.
+export function twinGroups(valid: StoredResult[], game: string, day: string): { mega: string[][]; common: string[][] } {
+  const names = latestNames(valid);
+  const rows = valid.filter((row) => row.game === game && row.day === day);
+  const toNames = (group: StoredResult[]) => group.map((row) => names.get(row.userId)!);
+  const allMega = (group: StoredResult[]) => {
+    const key = megaKey(group[0]);
+    return key !== null && group.every((row) => megaKey(row) === key);
+  };
+  return {
+    mega: groupsBy(rows, megaKey).map(toNames),
+    common: groupsBy(rows, matchKey).filter((group) => !allMega(group)).map(toNames),
+  };
+}
+
+// Con quién coincidió cada resultado de una persona, y si fue MEGA.
+function coincidences(valid: StoredResult[], userId: number, day?: string): { userId: number; game: string; mega: boolean }[] {
+  const found: { userId: number; game: string; mega: boolean }[] = [];
   for (const mine of valid) {
     if (mine.userId !== userId || (day !== undefined && mine.day !== day)) continue;
-    const key = twinKey(mine);
+    const key = matchKey(mine);
     if (key === null) continue;
+    const mega = megaKey(mine);
     for (const other of valid) {
       if (
         other.userId !== userId &&
         other.messageId !== mine.messageId &&
         other.game === mine.game &&
         other.day === mine.day &&
-        twinKey(other) === key
+        matchKey(other) === key
       ) {
-        found.push({ userId: other.userId, game: mine.game });
+        found.push({ userId: other.userId, game: mine.game, mega: mega !== null && megaKey(other) === mega });
       }
     }
   }
   return found;
 }
 
-export function twinsToday(valid: StoredResult[], userId: number, day: string): { name: string; games: string[] }[] {
+export function twinsToday(
+  valid: StoredResult[],
+  userId: number,
+  day: string,
+): { name: string; games: { game: string; mega: boolean }[] }[] {
   const names = latestNames(valid);
-  const byUser = new Map<number, string[]>();
-  for (const { userId: other, game } of coincidences(valid, userId, day)) {
-    byUser.set(other, [...(byUser.get(other) ?? []), game]);
+  const byUser = new Map<number, { game: string; mega: boolean }[]>();
+  for (const { userId: other, game, mega } of coincidences(valid, userId, day)) {
+    byUser.set(other, [...(byUser.get(other) ?? []), { game, mega }]);
   }
   return [...byUser]
     .map(([other, games]) => ({ name: names.get(other)!, games }))

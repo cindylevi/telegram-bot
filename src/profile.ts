@@ -101,9 +101,9 @@ export function buildProfile(rows: StoredResult[], player: Player, day: string, 
 
   const twins = twinsToday(valid, player.userId, day);
   if (twins.length > 0) {
-    const label = (id: string) => {
+    const label = ({ game: id, mega }: { game: string; mega: boolean }) => {
       const game = GAMES.find((g) => g.id === id)!;
-      return `${game.emoji} ${game.name}`;
+      return `${game.emoji} ${game.name}${mega ? " 💖" : ""}`;
     };
     lines.push(`👯 Matchi matchi de hoy: ${twins.map((t) => `${t.name} (${t.games.map(label).join(", ")})`).join(" · ")}`);
   }

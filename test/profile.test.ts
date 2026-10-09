@@ -110,6 +110,15 @@ describe("buildProfile", () => {
     expect(text).toContain("👯 Matchi matchi de hoy: Rafa (🎓 La Trivia del Día, 📐 Size It Up)");
   });
 
+  it("marca con 💖 los MEGA de hoy", () => {
+    const grid = "⬜🟨⬜⬜🟨";
+    const rows = [
+      result({ userId: 1, userName: "Cindy", game: "boludle", day: D, display: "4/6", pattern: grid }),
+      result({ userId: 2, userName: "Rafa", game: "boludle", day: D, display: "4/6", pattern: grid }),
+    ];
+    expect(buildProfile(rows, cindy, D, true)).toContain("👯 Matchi matchi de hoy: Rafa (🧉 Boludle 💖)");
+  });
+
   it("festeja si ya jugó todos", () => {
     const all = GAMES.map((game) => play(1, "Cindy", game.id, D, 1, "1"));
     expect(buildProfile(all, cindy, D, true).endsWith("📌 Hoy\n🎉 ¡Ya jugaste todos!")).toBe(true);

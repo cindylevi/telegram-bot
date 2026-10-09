@@ -282,58 +282,81 @@ describe("goldMedals", () => {
 });
 
 describe("matchi matchi", () => {
-  const play = (userId: number, userName: string, game: string, day: string, pattern: string | null, display = "1") =>
-    result({ userId, userName, game, day, pattern, display });
+  let nextMessage = 1000;
+  const play = (
+    userId: number,
+    userName: string,
+    game: string,
+    day: string,
+    display: string,
+    pattern: string | null,
+    messageId = nextMessage++,
+  ) => result({ userId, userName, game, day, display, pattern, messageId });
 
-  const rows = [
-    play(1, "Cindy", "trivia", D, "🟩🟩🟥"),
-    play(2, "Rafa", "trivia", D, "🟩🟩🟥"),
-    play(3, "Lu", "trivia", D, "🟩🟩🟩"),
-    play(4, "Juan", "trivia", D, "🟩🟩🟩"),
-    play(5, "Ana", "trivia", D, "🟥🟥🟥"),
-    play(1, "Cindy", "size-it-up", D, "", "185"),
-    play(2, "Rafa", "size-it-up", D, "", "185"),
-    play(3, "Lu", "size-it-up", D, "", "170"),
-    play(1, "Cindy", "trivia", "2026-09-23", "🟩🟩🟩"),
-    play(2, "Rafa", "trivia", "2026-09-23", "🟩🟩🟩"),
-    play(3, "Lu", "trivia", "2026-09-23", "🟩🟩🟩"),
-    play(1, "Cindy", "boludle", "2026-09-22", null, "4/6"),
-    play(3, "Lu", "boludle", "2026-09-22", null, "4/6"),
-  ];
+  const A = "⬜🟨⬜⬜🟨\n🟩🟩🟩🟩🟩";
+  const B = "🟨⬜⬜⬜🟨\n🟩🟩🟩🟩🟩";
 
-  it("agrupa a quienes tienen la misma grilla ese día en ese juego", () => {
-    expect(twinGroups(rows, "trivia", D)).toEqual([["Cindy", "Rafa"], ["Lu", "Juan"]]);
+  it("MEGA es mismo puntaje y misma grilla; común, mismo puntaje", () => {
+    const rows = [
+      play(1, "Cindy", "boludle", D, "4/6", A),
+      play(2, "Rafa", "boludle", D, "4/6", A),
+      play(3, "Tomer", "boludle", D, "4/6", B),
+      play(4, "Lu", "boludle", D, "5/6", A),
+    ];
+    expect(twinGroups(rows, "boludle", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [["Cindy", "Rafa", "Tomer"]] });
   });
 
-  it("sin grilla compara el puntaje exacto", () => {
-    expect(twinGroups(rows, "size-it-up", D)).toEqual([["Cindy", "Rafa"]]);
+  it("un MEGA solo no se repite como común", () => {
+    const rows = [play(1, "Cindy", "boludle", D, "4/6", A), play(2, "Rafa", "boludle", D, "4/6", A)];
+    expect(twinGroups(rows, "boludle", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
+  });
+
+  it("en la Trivia solo hay común aunque la grilla sea igual", () => {
+    const rows = [play(1, "Cindy", "trivia", D, "5/7", "🟩🟩🟥"), play(2, "Rafa", "trivia", D, "5/7", "🟩🟩🟥")];
+    expect(twinGroups(rows, "trivia", D)).toEqual({ mega: [], common: [["Cindy", "Rafa"]] });
+  });
+
+  it("sin detalle guardado coincidir el puntaje es común", () => {
+    const rows = [play(1, "Cindy", "size-it-up", D, "185", ""), play(2, "Rafa", "size-it-up", D, "185", "")];
+    expect(twinGroups(rows, "size-it-up", D)).toEqual({ mega: [], common: [["Cindy", "Rafa"]] });
+  });
+
+  it("con las mismas rondas Size It Up es MEGA", () => {
+    const rounds = "🟥🟥⬜️⬜️⬜️ 43\n🟥🟥🟥🟥⬜️ 74";
+    const rows = [play(1, "Cindy", "size-it-up", D, "185", rounds), play(2, "Rafa", "size-it-up", D, "185", rounds)];
+    expect(twinGroups(rows, "size-it-up", D).mega).toEqual([["Cindy", "Rafa"]]);
   });
 
   it("los resultados guardados sin grilla no cuentan", () => {
-    expect(twinGroups(rows, "boludle", "2026-09-22")).toEqual([]);
-  });
-
-  it("lista con quién hizo matchi matchi hoy y en qué juegos", () => {
-    expect(twinsToday(rows, 1, D)).toEqual([{ name: "Rafa", games: ["trivia", "size-it-up"] }]);
-    expect(twinsToday(rows, 5, D)).toEqual([]);
-  });
-
-  it("el histórico es con quien más veces coincidió", () => {
-    expect(historicTwin(rows, 1)).toEqual({ names: ["Rafa"], times: 3 });
-    expect(historicTwin(rows, 3)).toEqual({ names: ["Juan", "Cindy", "Rafa"], times: 1 });
-    expect(historicTwin(rows, 5)).toBeNull();
+    const rows = [play(1, "Cindy", "boludle", D, "4/6", null), play(3, "Lu", "boludle", D, "4/6", null)];
+    expect(twinGroups(rows, "boludle", D)).toEqual({ mega: [], common: [] });
   });
 
   it("un ft (mismo mensaje) no es matchi matchi, salvo con alguien de afuera", () => {
-    const ft = (userId: number, userName: string, messageId: number) =>
-      result({ userId, userName, game: "krillion", day: D, pattern: "🐟🫧", display: "255", messageId });
-    const pair = [ft(1, "Rafa", 50), ft(2, "WinnaZ", 50)];
-    expect(twinGroups(pair, "krillion", D)).toEqual([]);
+    const pair = [play(1, "Rafa", "krillion", D, "255", "🐟🫧", 50), play(2, "WinnaZ", "krillion", D, "255", "🐟🫧", 50)];
+    expect(twinGroups(pair, "krillion", D)).toEqual({ mega: [], common: [] });
     expect(twinsToday(pair, 1, D)).toEqual([]);
     expect(historicTwin(pair, 1)).toBeNull();
 
-    const withOutsider = [...pair, ft(3, "Tomer", 51)];
-    expect(twinGroups(withOutsider, "krillion", D)).toEqual([["Rafa", "WinnaZ", "Tomer"]]);
-    expect(twinsToday(withOutsider, 1, D)).toEqual([{ name: "Tomer", games: ["krillion"] }]);
+    const withOutsider = [...pair, play(3, "Tomer", "krillion", D, "255", "🐟🫧", 51)];
+    expect(twinGroups(withOutsider, "krillion", D)).toEqual({ mega: [["Rafa", "WinnaZ", "Tomer"]], common: [] });
+    expect(twinsToday(withOutsider, 1, D)).toEqual([{ name: "Tomer", games: [{ game: "krillion", mega: true }] }]);
+  });
+
+  it("hoy lista con quién y en qué juegos, marcando los MEGA; el histórico cuenta los dos", () => {
+    const rows = [
+      play(1, "Cindy", "boludle", D, "4/6", A),
+      play(2, "Rafa", "boludle", D, "4/6", A),
+      play(1, "Cindy", "trivia", D, "5/7", "🟩🟩🟥"),
+      play(2, "Rafa", "trivia", D, "5/7", "🟩🟥🟩"),
+      play(1, "Cindy", "trivia", "2026-09-23", "3/7", "🟩🟥🟥"),
+      play(3, "Lu", "trivia", "2026-09-23", "3/7", "🟥🟩🟥"),
+    ];
+    expect(twinsToday(rows, 1, D)).toEqual([
+      { name: "Rafa", games: [{ game: "boludle", mega: true }, { game: "trivia", mega: false }] },
+    ]);
+    expect(historicTwin(rows, 1)).toEqual({ names: ["Rafa"], times: 2 });
+    expect(historicTwin(rows, 3)).toEqual({ names: ["Cindy"], times: 1 });
+    expect(historicTwin(rows, 5)).toBeNull();
   });
 });

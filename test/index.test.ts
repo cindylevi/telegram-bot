@@ -467,6 +467,6 @@ describe("ft", () => {
     await post({ update_id: 2, message: message({ message_id: 2, date: DATE + 60, text: "ft Rafa" }) });
     await post({ update_id: 3, message: message({ message_id: 3, date: DATE + 120, text: "/resumen" }) });
     expect(sentTexts().at(-1)).toContain("🥇 Cindy y Rafa — 4/6");
-    expect(sentTexts().at(-1)).not.toContain("Matchi matchi (Twinning): Cindy y Rafa");
+    expect(sentTexts().at(-1)).not.toContain("matchi matchi: Cindy y Rafa");
   });
 });

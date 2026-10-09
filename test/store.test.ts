@@ -20,7 +20,7 @@ const base: NewResult = {
 describe("store", () => {
   it("guarda y lee un resultado", async () => {
     await saveResult(env.DB, base);
-    const { chatId, messageId, ...stored } = base;
+    const { chatId, ...stored } = base;
     expect(await loadResults(env.DB, -1001)).toEqual([stored]);
   });
 
@@ -39,24 +39,30 @@ describe("store", () => {
 
   it("encuentra a quienes tienen el mismo resultado en el mismo puzzle", async () => {
     const trivia = { ...base, game: "trivia", puzzle: "2026-09-24", display: "2/3", pattern: "🟩🟩🟥" };
+    await saveResult(env.DB, { ...trivia, messageId: 1, userId: 1, userName: "Cindy" });
+    await saveResult(env.DB, { ...trivia, messageId: 2, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
+    await saveResult(env.DB, { ...trivia, messageId: 3, userId: 3, userName: "Lu", puzzle: "2026-09-23" });
+    await saveResult(env.DB, { ...trivia, messageId: 4, userId: 4, userName: "Viejo", pattern: null });
+    expect(await findTwins(env.DB, { ...trivia, messageId: 5, userId: 5 })).toEqual([{ userId: 1, userName: "Cindy" }]);
+  });
+
+  it("los del mismo ft (mismo mensaje) no son matchi matchi", async () => {
+    const trivia = { ...base, game: "trivia", puzzle: "2026-09-24", display: "2/3", pattern: "🟩🟩🟥" };
     await saveResult(env.DB, { ...trivia, userId: 1, userName: "Cindy" });
-    await saveResult(env.DB, { ...trivia, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
-    await saveResult(env.DB, { ...trivia, userId: 3, userName: "Lu", puzzle: "2026-09-23" });
-    await saveResult(env.DB, { ...trivia, userId: 4, userName: "Viejo", pattern: null });
-    expect(await findTwins(env.DB, { ...trivia, userId: 5 })).toEqual([{ userId: 1, userName: "Cindy" }]);
+    expect(await findTwins(env.DB, { ...trivia, userId: 2 })).toEqual([]);
   });
 
   it("con la misma grilla pero distinto puntaje no es matchi matchi", async () => {
     const foxi = { ...base, game: "foximax", puzzle: "1495", pattern: "🟩🟩🟩🟩🟩" };
-    await saveResult(env.DB, { ...foxi, userId: 1, userName: "Cindy", display: "6/8" });
-    expect(await findTwins(env.DB, { ...foxi, userId: 2, display: "5/8" })).toEqual([]);
+    await saveResult(env.DB, { ...foxi, messageId: 1, userId: 1, userName: "Cindy", display: "6/8" });
+    expect(await findTwins(env.DB, { ...foxi, messageId: 2, userId: 2, display: "5/8" })).toEqual([]);
   });
 
   it("sin grilla compara el puntaje exacto", async () => {
     const size = { ...base, game: "size-it-up", puzzle: "2026-09-24", pattern: "" };
-    await saveResult(env.DB, { ...size, userId: 1, userName: "Cindy", display: "185" });
-    await saveResult(env.DB, { ...size, userId: 2, userName: "Rafa", display: "170" });
-    expect(await findTwins(env.DB, { ...size, userId: 3, display: "185" })).toEqual([{ userId: 1, userName: "Cindy" }]);
+    await saveResult(env.DB, { ...size, messageId: 1, userId: 1, userName: "Cindy", display: "185" });
+    await saveResult(env.DB, { ...size, messageId: 2, userId: 2, userName: "Rafa", display: "170" });
+    expect(await findTwins(env.DB, { ...size, messageId: 3, userId: 3, display: "185" })).toEqual([{ userId: 1, userName: "Cindy" }]);
   });
 
   it("guarda la grilla", async () => {

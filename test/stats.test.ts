@@ -323,4 +323,17 @@ describe("matchi matchi", () => {
     expect(historicTwin(rows, 3)).toEqual({ names: ["Juan", "Cindy", "Rafa"], times: 1 });
     expect(historicTwin(rows, 5)).toBeNull();
   });
+
+  it("un ft (mismo mensaje) no es matchi matchi, salvo con alguien de afuera", () => {
+    const ft = (userId: number, userName: string, messageId: number) =>
+      result({ userId, userName, game: "krillion", day: D, pattern: "🐟🫧", display: "255", messageId });
+    const pair = [ft(1, "Rafa", 50), ft(2, "WinnaZ", 50)];
+    expect(twinGroups(pair, "krillion", D)).toEqual([]);
+    expect(twinsToday(pair, 1, D)).toEqual([]);
+    expect(historicTwin(pair, 1)).toBeNull();
+
+    const withOutsider = [...pair, ft(3, "Tomer", 51)];
+    expect(twinGroups(withOutsider, "krillion", D)).toEqual([["Rafa", "WinnaZ", "Tomer"]]);
+    expect(twinsToday(withOutsider, 1, D)).toEqual([{ name: "Tomer", games: ["krillion"] }]);
+  });
 });

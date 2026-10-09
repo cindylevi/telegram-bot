@@ -171,9 +171,7 @@ async function saveResults(env: Env, message: TelegramMessage, from: TelegramUse
     const shared = await shareResult(env, result, partners);
     if (shared.length > 0) notes.push(sharedNote(shared, match.game));
 
-    // Los del ft tienen el mismo resultado a la fuerza: el matchi matchi es solo con los de afuera.
-    const inFt = new Set(partners.map((player) => player.userId));
-    const twins = (await findTwins(env.DB, result)).filter((twin) => !inFt.has(twin.userId));
+    const twins = await findTwins(env.DB, result);
     if (twins.length > 0) {
       const names = joinNames([...twins.map((twin) => twin.userName), result.userName, ...shared]);
       await sendMessage(env.BOT_TOKEN, message.chat.id, `👯 ¡${names} hicieron matchi matchi en ${match.game.emoji} ${match.game.name}!`);
@@ -196,7 +194,7 @@ async function ftAfterResults(env: Env, message: TelegramMessage, from: Telegram
   for (const stored of last) {
     const game = GAMES.find((candidate) => candidate.id === stored.game);
     if (!game) continue;
-    const shared = await shareResult(env, { ...stored, chatId: message.chat.id, messageId: message.message_id }, partners.players);
+    const shared = await shareResult(env, { ...stored, chatId: message.chat.id }, partners.players);
     if (shared.length > 0) notes.push(sharedNote(shared, game));
   }
   return [...notes, ...missingNotes(partners)];

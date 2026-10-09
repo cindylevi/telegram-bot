@@ -10,11 +10,12 @@ export interface StoredResult {
   tiebreak: number | null;
   // Grilla de emojis ("" si el juego no trae una). null en los resultados guardados antes de que existiera.
   pattern: string | null;
+  // Mensaje del que salió. Las copias de un ft comparten el del original: así se sabe que lo jugaron juntos.
+  messageId: number;
 }
 
 export interface NewResult extends StoredResult {
   chatId: number;
-  messageId: number;
 }
 
 interface Row {
@@ -28,6 +29,7 @@ interface Row {
   created_at: number;
   tiebreak: number | null;
   pattern: string | null;
+  message_id: number;
 }
 
 // Devuelve false si ya estaba (mismo puzzle de la misma persona: vale el primero).
@@ -57,13 +59,13 @@ export async function saveResult(db: D1Database, result: NewResult): Promise<boo
 }
 
 // Quienes ya mandaron el resultado idéntico en el mismo puzzle y día: mismo puntaje exacto
-// y, si el juego trae grilla, también la misma grilla.
+// y, si el juego trae grilla, también la misma grilla. Los del mismo ft (mismo mensaje) no cuentan.
 export async function findTwins(db: D1Database, result: NewResult): Promise<{ userId: number; userName: string }[]> {
   if (result.pattern === null) return [];
   const { results } = await db
     .prepare(
       `SELECT user_id, user_name FROM results
-       WHERE chat_id = ? AND game = ? AND puzzle = ? AND day = ? AND user_id <> ?
+       WHERE chat_id = ? AND game = ? AND puzzle = ? AND day = ? AND user_id <> ? AND message_id <> ?
          AND pattern = ? AND display = ?
        ORDER BY created_at, id`,
     )
@@ -73,6 +75,7 @@ export async function findTwins(db: D1Database, result: NewResult): Promise<{ us
       result.puzzle,
       result.day,
       result.userId,
+      result.messageId,
       result.pattern,
       result.display,
     )
@@ -89,7 +92,7 @@ export async function lastMessageResults(
 ): Promise<StoredResult[]> {
   const { results } = await db
     .prepare(
-      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak, pattern
+      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak, pattern, message_id
        FROM results
        WHERE chat_id = ? AND user_id = ? AND created_at >= ? AND message_id = (
          SELECT MAX(message_id) FROM results WHERE chat_id = ? AND user_id = ?
@@ -104,7 +107,7 @@ export async function lastMessageResults(
 export async function loadResults(db: D1Database, chatId: number): Promise<StoredResult[]> {
   const { results } = await db
     .prepare(
-      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak, pattern
+      `SELECT user_id, user_name, game, puzzle, score, display, day, created_at, tiebreak, pattern, message_id
        FROM results WHERE chat_id = ? ORDER BY created_at, id`,
     )
     .bind(chatId)
@@ -124,5 +127,6 @@ function fromRow(row: Row): StoredResult {
     createdAt: row.created_at,
     tiebreak: row.tiebreak,
     pattern: row.pattern,
+    messageId: row.message_id,
   };
 }

@@ -460,4 +460,13 @@ describe("ft", () => {
     await post({ update_id: 2, message: message({ message_id: 2, from: tomer }) });
     expect(sentTexts().at(-1)).toBe("👯 ¡Cindy, Rafa y Tomer hicieron matchi matchi en 🧉 Boludle!");
   });
+
+  it("el ft en el mensaje siguiente tampoco es matchi matchi en el resumen", async () => {
+    await knownPlayers();
+    await post({ update_id: 1, message: message({ message_id: 1 }) });
+    await post({ update_id: 2, message: message({ message_id: 2, date: DATE + 60, text: "ft Rafa" }) });
+    await post({ update_id: 3, message: message({ message_id: 3, date: DATE + 120, text: "/resumen" }) });
+    expect(sentTexts().at(-1)).toContain("🥇 Cindy y Rafa — 4/6");
+    expect(sentTexts().at(-1)).not.toContain("Matchi matchi (Twinning): Cindy y Rafa");
+  });
 });

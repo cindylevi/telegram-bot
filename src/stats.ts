@@ -280,16 +280,19 @@ function latestNames(valid: StoredResult[]): Map<number, string> {
   return new Map([...names].map(([userId, { name }]) => [userId, name]));
 }
 
-// Quienes tienen el resultado idéntico (grupos de 2 o más) en un juego un día.
+// Quienes tienen el resultado idéntico en un juego un día. Un ft solo (todos del mismo mensaje)
+// no es matchi matchi: hace falta al menos un resultado de otro mensaje.
 export function twinGroups(valid: StoredResult[], game: string, day: string): string[][] {
   const names = latestNames(valid);
-  const groups = new Map<string, number[]>();
+  const groups = new Map<string, StoredResult[]>();
   for (const row of valid) {
     const key = row.game === game && row.day === day ? twinKey(row) : null;
     if (key === null) continue;
-    groups.set(key, [...(groups.get(key) ?? []), row.userId]);
+    groups.set(key, [...(groups.get(key) ?? []), row]);
   }
-  return [...groups.values()].filter((ids) => ids.length > 1).map((ids) => ids.map((id) => names.get(id)!));
+  return [...groups.values()]
+    .filter((rows) => new Set(rows.map((row) => row.messageId)).size > 1)
+    .map((rows) => rows.map((row) => names.get(row.userId)!));
 }
 
 // Con quién coincidió cada resultado de una persona: [otra persona, juego, día].
@@ -300,7 +303,13 @@ function coincidences(valid: StoredResult[], userId: number, day?: string): { us
     const key = twinKey(mine);
     if (key === null) continue;
     for (const other of valid) {
-      if (other.userId !== userId && other.game === mine.game && other.day === mine.day && twinKey(other) === key) {
+      if (
+        other.userId !== userId &&
+        other.messageId !== mine.messageId &&
+        other.game === mine.game &&
+        other.day === mine.day &&
+        twinKey(other) === key
+      ) {
         found.push({ userId: other.userId, game: mine.game });
       }
     }

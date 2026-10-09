@@ -26,6 +26,7 @@ Además, cada persona puede elegir por privado qué foto usa el bot para ella en
   - **La Trivia del Día:** solo matchi común, porque coincidir es fácil.
 - **Juegos con solo MEGA:** en **Boludle** coincidir el puntaje es trivial, así que no hay matchi común: solo cuenta el MEGA, en el aviso, el resumen y `/detalle` (también en el histórico). Agregado el 2026-10-09, después del primer deploy.
   - **Sin detalle** (Magnitudle, Originle): coincidir el puntaje es matchi común.
+- **Minute Cryptic:** el tiempo no cuenta para el ranking ni para el matchi común (el resultado son las pistas); va como último renglón del `pattern`, así que el MEGA pide mismas pistas, misma grilla y mismo tiempo. La migración `0005` convierte los resultados guardados con el formato anterior. Agregado el 2026-10-09, después del primer deploy.
 - **Juegos con mega por rondas:** Size It Up (los cinco renglones `🟥🟥⬜️⬜️⬜️ 43`) y MapTap (`87🎓 92🏆 92🏆 82🌟 88🎉`). Matchi común = mismo total; mega = mismas rondas.
 - **Resultados viejos:** los guardados antes de esto tienen `pattern = ""` en Size It Up y MapTap, así que solo dan matchi común. Los de `pattern = NULL` siguen sin contar para nada.
 - **ft:** dos resultados con el mismo `message_id` son un ft y no son matchi ni mega entre sí.

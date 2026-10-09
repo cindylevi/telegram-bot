@@ -4,11 +4,7 @@ import type { Game } from "./types";
 const RESULT =
   /Minute Cryptic\s*-\s*(\d{1,2})\s+([a-z]+),?\s*(\d{4})[\s\S]*?\b(\d+)\s+hints?\b([^\n]*)/i;
 const TIME = /Time:\s*((?:\d+h\s*)?(?:\d+m\s*)?(?:\d+s)?)/i;
-
-function seconds(time: string): number {
-  const part = (unit: string) => Number(time.match(new RegExp(`(\\d+)${unit}`))?.[1] ?? 0);
-  return part("h") * 3600 + part("m") * 60 + part("s");
-}
+const GRID = /^[^\p{L}\p{N}]+$/u;
 
 export const minuteCryptic: Game = {
   id: "minute-cryptic",
@@ -26,6 +22,8 @@ export const minuteCryptic: Game = {
     const hintsText = hints === "1" ? "1 pista" : `${hints} pistas`;
     const time = rest.match(TIME)?.[1].trim();
     if (!time) return { puzzle, score: Number(hints), display: hintsText, tiebreak: null };
-    return { puzzle, score: Number(hints), display: `${hintsText} · ${time}`, tiebreak: seconds(time) };
+    // El tiempo no cuenta para el ranking: solo para el MEGA matchi matchi, junto con la grilla.
+    const grid = match[0].split("\n").map((line) => line.trim()).filter((line) => GRID.test(line));
+    return { puzzle, score: Number(hints), display: hintsText, tiebreak: null, pattern: [...grid, time].join("\n") };
   },
 };

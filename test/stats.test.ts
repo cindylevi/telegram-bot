@@ -332,9 +332,14 @@ describe("matchi matchi", () => {
     expect(twinGroups(rows, "minute-cryptic", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
   });
 
-  it("en la Trivia solo hay común aunque la grilla sea igual", () => {
-    const rows = [play(1, "Cindy", "trivia", D, "5/7", "🟩🟩🟥"), play(2, "Rafa", "trivia", D, "5/7", "🟩🟩🟥")];
+  it("en la Trivia el común exige la misma grilla y nunca es MEGA", () => {
+    const rows = [
+      play(1, "Cindy", "trivia", D, "5/7", "🟩🟩🟥"),
+      play(2, "Rafa", "trivia", D, "5/7", "🟩🟩🟥"),
+      play(3, "Tomer", "trivia", D, "5/7", "🟩🟥🟩"),
+    ];
     expect(twinGroups(rows, "trivia", D)).toEqual({ mega: [], common: [["Cindy", "Rafa"]] });
+    expect(twinsToday(rows, 3, D)).toEqual([]);
   });
 
   it("sin detalle guardado coincidir el puntaje es común", () => {
@@ -369,9 +374,9 @@ describe("matchi matchi", () => {
       play(1, "Cindy", "boludle", D, "4/6", A),
       play(2, "Rafa", "boludle", D, "4/6", A),
       play(1, "Cindy", "trivia", D, "5/7", "🟩🟩🟥"),
-      play(2, "Rafa", "trivia", D, "5/7", "🟩🟥🟩"),
+      play(2, "Rafa", "trivia", D, "5/7", "🟩🟩🟥"),
       play(1, "Cindy", "trivia", "2026-09-23", "3/7", "🟩🟥🟥"),
-      play(3, "Lu", "trivia", "2026-09-23", "3/7", "🟥🟩🟥"),
+      play(3, "Lu", "trivia", "2026-09-23", "3/7", "🟩🟥🟥"),
     ];
     expect(twinsToday(rows, 1, D)).toEqual([
       { name: "Rafa", games: [{ game: "boludle", mega: true }, { game: "trivia", mega: false }] },

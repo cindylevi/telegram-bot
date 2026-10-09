@@ -57,6 +57,14 @@ describe("store", () => {
     expect(await findTwins(env.DB, { ...boludle, messageId: 3, userId: 3 })).toEqual([{ userId: 1, userName: "Cindy", mega: true }]);
   });
 
+  it("en la Trivia solo encuentra a los de la misma grilla", async () => {
+    const trivia = { ...base, game: "trivia", puzzle: "2026-09-24", display: "2/3", pattern: "🟩🟩🟥" };
+    await saveResult(env.DB, { ...trivia, messageId: 1, userId: 1, userName: "Cindy" });
+    await saveResult(env.DB, { ...trivia, messageId: 2, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
+    expect(await findTwins(env.DB, { ...trivia, messageId: 3, userId: 3 })).toEqual([{ userId: 1, userName: "Cindy", mega: false }]);
+    expect(await findTwins(env.DB, { ...trivia, messageId: 4, userId: 4, pattern: "" })).toEqual([]);
+  });
+
   it("en la Trivia y sin detalle nunca es MEGA", async () => {
     const trivia = { ...base, game: "trivia", puzzle: "2026-09-24", display: "2/3", pattern: "🟩🟩🟥" };
     await saveResult(env.DB, { ...trivia, messageId: 1, userId: 1, userName: "Cindy" });

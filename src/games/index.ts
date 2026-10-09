@@ -46,6 +46,10 @@ export function hasCommon(gameId: string): boolean {
   return GAMES.find((game) => game.id === gameId)?.common !== false;
 }
 
+export function commonByPattern(gameId: string): boolean {
+  return GAMES.find((game) => game.id === gameId)?.commonByPattern === true;
+}
+
 export function listGames(): string {
   const lines = GAMES.map((game) => `${game.emoji} ${game.name} — ${game.url} · /${commandName(game)}detalle`);
   return [`🎮 Juegos que reconozco (${GAMES.length})`, "", ...lines].join("\n");

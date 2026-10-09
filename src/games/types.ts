@@ -23,6 +23,8 @@ export interface Game {
   mega?: false;
   // false = solo cuenta el MEGA (en Boludle y Minute Cryptic coincidir el puntaje es trivial).
   common?: false;
+  // true = el común exige además la misma grilla (en la Trivia coincidir solo el puntaje es fácil).
+  commonByPattern?: true;
   // Hora argentina en la que cambia el puzzle, si no es a la medianoche: desde esa hora lo que se manda
   // cuenta para el día siguiente (Pedantle cambia a las 16).
   dayStartsAt?: number;

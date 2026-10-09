@@ -1,4 +1,4 @@
-import { hasCommon, hasMega } from "./games";
+import { commonByPattern, hasCommon, hasMega } from "./games";
 
 export interface StoredResult {
   userId: number;
@@ -67,7 +67,8 @@ export interface Twin {
 }
 
 // Quienes ya mandaron el mismo puntaje en el mismo puzzle y día; MEGA si además coincide el detalle.
-// Los del mismo ft (mismo mensaje) no cuentan, y en los juegos sin común (Boludle) solo los MEGA.
+// Los del mismo ft (mismo mensaje) no cuentan, en los juegos sin común (Boludle) solo los MEGA
+// y en la Trivia solo los que tienen la misma grilla.
 export async function findTwins(db: D1Database, result: NewResult): Promise<Twin[]> {
   if (result.pattern === null) return [];
   const { results } = await db
@@ -80,7 +81,10 @@ export async function findTwins(db: D1Database, result: NewResult): Promise<Twin
     .bind(result.chatId, result.game, result.puzzle, result.day, result.userId, result.messageId, result.display)
     .all<{ user_id: number; user_name: string; pattern: string }>();
   const megaPossible = result.pattern !== "" && hasMega(result.game);
+  const samePatternOnly = commonByPattern(result.game);
+  if (samePatternOnly && result.pattern === "") return [];
   return results
+    .filter((row) => !samePatternOnly || row.pattern === result.pattern)
     .map((row) => ({ userId: row.user_id, userName: row.user_name, mega: megaPossible && row.pattern === result.pattern }))
     .filter((twin) => twin.mega || hasCommon(result.game));
 }

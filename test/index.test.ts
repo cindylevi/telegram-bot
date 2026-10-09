@@ -600,6 +600,14 @@ describe("/mifoto", () => {
     expect(sentTexts().at(-1)).toBe("Mandala como foto, no como archivo 🙏");
   });
 
+  it("si manda el archivo con /mifoto de epígrafe, la foto que manda después queda elegida", async () => {
+    const document = { file_id: "archivo", mime_type: "image/jpeg" };
+    await post({ update_id: 1, message: message({ chat: privado, text: undefined, caption: "/mifoto", document }) });
+    await post({ update_id: 2, message: message({ message_id: 2, chat: privado, date: DATE + 60, text: undefined, photo: foto }) });
+    expect(await elegida()).toBe("grande");
+    expect(sentTexts()).toEqual(["Mandala como foto, no como archivo 🙏", "Listo, esa es tu foto para los mega 💖"]);
+  });
+
   it("en el grupo explica que es por privado", async () => {
     await post({ update_id: 1, message: message({ text: "/mifoto" }) });
     expect(sentTexts()).toEqual(["La foto se cambia por privado: escribime a mí 😉"]);

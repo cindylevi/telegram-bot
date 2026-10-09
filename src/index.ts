@@ -233,7 +233,11 @@ async function photoCommand(
     await choosePhoto(env.DB, from.id, largest, message.date);
     return "Listo, esa es tu foto para los mega 💖";
   }
-  if (message.document) return "Mandala como foto, no como archivo 🙏";
+  if (message.document) {
+    // Con /mifoto de epígrafe queda el pedido: la foto que mande después es la elegida.
+    if (isCommand) await requestPhoto(env.DB, from.id, message.date);
+    return "Mandala como foto, no como archivo 🙏";
+  }
   if (isCommand) {
     await requestPhoto(env.DB, from.id, message.date);
     return "Mandame la foto que querés usar en los mega 💖";

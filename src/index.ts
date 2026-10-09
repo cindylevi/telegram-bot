@@ -18,6 +18,7 @@ const HELP_COMMAND = /^\/(help|start)(@\w+)?(\s|$)/i;
 const PERSON_COMMAND = /^\/detalle(@\w+)?(?:\s+([\s\S]+))?$/i;
 const MY_PHOTO_COMMAND = /^\/mifoto(@\w+)?(?:\s+(\S+))?\s*$/i;
 const PHOTO_REQUEST_SECONDS = 600;
+const MIN_PHOTO_SIDE = 640;
 
 const HELP = [
   "🤖 Comandos",
@@ -228,9 +229,11 @@ async function photoCommand(
     await forgetPhoto(env.DB, from.id);
     return "Listo, vuelvo a usar tu foto de perfil.";
   }
-  const largest = message.photo?.at(-1)?.file_id;
-  if (largest && (isCommand || (await takePhotoRequest(env.DB, from.id, message.date - PHOTO_REQUEST_SECONDS)))) {
-    await choosePhoto(env.DB, from.id, largest, message.date);
+  // La más chica que alcanza para la franja: bajarla y pasarla a base64 cuesta CPU (10 ms en el plan gratis).
+  const fit = message.photo?.find((size) => Math.min(size.width, size.height) >= MIN_PHOTO_SIDE) ?? message.photo?.at(-1);
+  const fileId = fit?.file_id;
+  if (fileId && (isCommand || (await takePhotoRequest(env.DB, from.id, message.date - PHOTO_REQUEST_SECONDS)))) {
+    await choosePhoto(env.DB, from.id, fileId, message.date);
     return "Listo, esa es tu foto para los mega 💖";
   }
   if (message.document) {

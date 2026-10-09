@@ -85,7 +85,7 @@ Solo por privado y solo para miembros del grupo, como los demás comandos por pr
 
 - **Elegir:** una foto con `/mifoto` como epígrafe, o `/mifoto` y después la foto. Para lo segundo, el bot recuerda por 10 minutos que esa persona pidió `/mifoto`. Responde `Listo, esa es tu foto para los mega 💖`.
 - **Volver a la de perfil:** `/mifoto borrar`.
-- **Qué se guarda:** el `file_id` de la foto más grande que manda Telegram; la foto no se descarga ni se copia.
+- **Qué se guarda:** el `file_id` del tamaño más chico que manda Telegram con el lado corto de al menos 640 px (o el más grande, si ninguno llega); alcanza para la franja y pesa menos para el límite de CPU del plan gratis. La foto no se descarga ni se copia.
 - **Datos:** migración `0004_user_photos.sql` con la tabla `user_photos (user_id INTEGER PRIMARY KEY, file_id TEXT NOT NULL, updated_at INTEGER NOT NULL)` y otra para el pedido pendiente, `photo_requests (user_id INTEGER PRIMARY KEY, requested_at INTEGER NOT NULL)`.
 - `TelegramMessage` suma `photo` y `caption`; `/help` suma el comando.
 

@@ -571,6 +571,17 @@ describe("/mifoto", () => {
     expect(sentTexts()).toEqual(["Listo, esa es tu foto para los mega 💖"]);
   });
 
+  it("guarda la más chica de al menos 640 px: alcanza para la franja y pesa menos", async () => {
+    const tamaños = [
+      { file_id: "chica", width: 90, height: 120 },
+      { file_id: "media", width: 480, height: 640 },
+      { file_id: "justa", width: 960, height: 1280 },
+      { file_id: "enorme", width: 1920, height: 2560 },
+    ];
+    await post({ update_id: 1, message: message({ chat: privado, text: undefined, caption: "/mifoto", photo: tamaños }) });
+    expect(await elegida()).toBe("justa");
+  });
+
   it("/mifoto y después la foto, dentro de los 10 minutos", async () => {
     await post({ update_id: 1, message: message({ chat: privado, text: "/mifoto" }) });
     await post({ update_id: 2, message: message({ message_id: 2, chat: privado, date: DATE + 60, text: undefined, photo: foto }) });

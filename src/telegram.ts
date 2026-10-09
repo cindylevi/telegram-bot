@@ -74,3 +74,38 @@ export async function isChatMember(token: string, chatId: number, userId: number
   if (status === "restricted") return data.result?.is_member === true;
   return status === "member" || status === "administrator" || status === "creator";
 }
+
+export async function sendPhoto(token: string, chatId: number, png: ArrayBuffer, caption: string): Promise<void> {
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  form.append("caption", caption);
+  form.append("photo", new Blob([png], { type: "image/png" }), "mega.png");
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: form });
+  if (!response.ok) throw new Error(`sendPhoto ${response.status}: ${await response.text()}`);
+}
+
+// La foto de perfil más reciente, en su tamaño más grande. null si no tiene o no es visible para el bot.
+export async function profilePhotoId(token: string, userId: number): Promise<string | null> {
+  const response = await fetch(`https://api.telegram.org/bot${token}/getUserProfilePhotos`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ user_id: userId, limit: 1 }),
+  });
+  if (!response.ok) return null;
+  const data = await response.json<{ result?: { photos: { file_id: string }[][] } }>();
+  return data.result?.photos[0]?.at(-1)?.file_id ?? null;
+}
+
+// Baja un archivo de Telegram. Su URL lleva el token del bot: no tiene que salir del Worker.
+export async function downloadFile(token: string, fileId: string): Promise<ArrayBuffer | null> {
+  const meta = await fetch(`https://api.telegram.org/bot${token}/getFile`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ file_id: fileId }),
+  });
+  if (!meta.ok) return null;
+  const path = (await meta.json<{ result?: { file_path?: string } }>()).result?.file_path;
+  if (!path) return null;
+  const file = await fetch(`https://api.telegram.org/file/bot${token}/${path}`);
+  return file.ok ? file.arrayBuffer() : null;
+}

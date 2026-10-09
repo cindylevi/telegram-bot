@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { chunkText, isChatMember, sendMessage } from "../src/telegram";
+import { chunkText, isChatMember, sendMessage, sendPhoto } from "../src/telegram";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -56,5 +56,19 @@ describe("isChatMember", () => {
   it("rechaza si Telegram responde con error", async () => {
     answer({ ok: false, description: "user not found" }, 400);
     expect(await isChatMember("tok", -1001, 42)).toBe(false);
+  });
+});
+
+describe("sendPhoto", () => {
+  it("manda el PNG como multipart con el epígrafe", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}"));
+    await sendPhoto("t", -1, new Uint8Array([1, 2]).buffer, "💖 hola");
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(url).toBe("https://api.telegram.org/bott/sendPhoto");
+    const form = init?.body as FormData;
+    expect(form.get("chat_id")).toBe("-1");
+    expect(form.get("caption")).toBe("💖 hola");
+    expect((form.get("photo") as File).type).toBe("image/png");
+    fetchSpy.mockRestore();
   });
 });

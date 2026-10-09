@@ -9,7 +9,8 @@ import { FIXTURES } from "./fixtures/games";
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 const CHAT = -1001;
-const testEnv: Env = { ...env, GROUP_CHAT_ID: String(CHAT) };
+const quickAction = vi.fn<(action: string, options: { html: string }) => Promise<Response>>();
+const testEnv: Env = { ...env, GROUP_CHAT_ID: String(CHAT), BROWSER: { quickAction } as unknown as BrowserRun };
 // 2026-09-24 15:00 en Argentina
 const DATE = Date.UTC(2026, 8, 24, 18, 0) / 1000;
 const boludle = FIXTURES.find((f) => f.id === "boludle")!.text;
@@ -19,10 +20,20 @@ let memberStatus = "member";
 
 beforeEach(() => {
   memberStatus = "member";
-  fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-    if (String(url).endsWith("/getChatMember")) {
+  quickAction.mockReset();
+  quickAction.mockImplementation(async () => new Response(new Uint8Array([137, 80, 78, 71])));
+  fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) => {
+    const path = String(url);
+    if (path.endsWith("/getChatMember")) {
       return new Response(JSON.stringify({ ok: true, result: { status: memberStatus } }));
     }
+    if (path.endsWith("/getUserProfilePhotos")) {
+      const { user_id } = JSON.parse(String(init?.body));
+      const photos = user_id === 2 ? [[{ file_id: "rafa-chica" }, { file_id: "rafa-grande" }]] : [];
+      return new Response(JSON.stringify({ ok: true, result: { photos } }));
+    }
+    if (path.endsWith("/getFile")) return new Response(JSON.stringify({ ok: true, result: { file_path: "photos/rafa.jpg" } }));
+    if (path.endsWith("/photos/rafa.jpg")) return new Response(new Uint8Array([1, 2, 3]));
     return new Response("{}");
   });
 });
@@ -68,6 +79,15 @@ function sent(): { chat_id: number; text: string }[] {
 
 function sentTexts(): string[] {
   return sent().map((body) => body.text);
+}
+
+function photos(): { chat_id: string; caption: string }[] {
+  return fetchSpy.mock.calls
+    .filter(([url]) => String(url).endsWith("/sendPhoto"))
+    .map(([, init]) => {
+      const form = init?.body as FormData;
+      return { chat_id: String(form.get("chat_id")), caption: String(form.get("caption")) };
+    });
 }
 
 describe("webhook", () => {
@@ -176,7 +196,60 @@ describe("aviso de matchi matchi", () => {
     await post({ update_id: 1, message: message() });
     expect(sent()).toEqual([]);
     await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    expect(photos().map((photo) => photo.caption)).toEqual(["💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!"]);
+  });
+
+  it("el MEGA sale con foto: Rafa con su foto de perfil, Cindy con la inicial", async () => {
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    expect(photos()).toEqual([{ chat_id: String(CHAT), caption: "💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!" }]);
+    expect(sent()).toEqual([]);
+    // Sin esperar la marca, en el Chrome de Cloudflare no cargan las tipografías.
+    expect(quickAction.mock.calls[0][1]).toMatchObject({ waitForSelector: { selector: "#fonts-ready" } });
+    const html = quickAction.mock.calls[0][1].html;
+    expect(html).toContain("data:image/jpeg;base64,AQID");
+    expect(html).toMatch(/>C<\/div>/);
+  });
+
+  it("usa la foto elegida con /mifoto antes que la de perfil", async () => {
+    await env.DB.prepare("INSERT INTO user_photos (user_id, file_id, updated_at) VALUES (2, 'elegida', 0)").run();
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    const getFiles = fetchSpy.mock.calls.filter(([url]) => String(url).endsWith("/getFile"));
+    expect(getFiles.map(([, init]) => JSON.parse(String(init?.body)).file_id)).toEqual(["elegida"]);
+  });
+
+  it("si falla la foto de alguien, va con su inicial y el MEGA sale igual con foto", async () => {
+    fetchSpy.mockImplementation(async (url) => {
+      if (String(url).endsWith("/getFile")) return new Response("{}", { status: 400 });
+      if (String(url).endsWith("/getUserProfilePhotos")) {
+        return new Response(JSON.stringify({ ok: true, result: { photos: [[{ file_id: "x" }]] } }));
+      }
+      return new Response("{}");
+    });
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    expect(photos()).toHaveLength(1);
+    expect(quickAction.mock.calls[0][1].html).toMatch(/>R<\/div>/);
+  });
+
+  it("si falla el render, el MEGA sale como texto", async () => {
+    quickAction.mockImplementation(async () => new Response("sin cuota", { status: 429 }));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa }) });
+    expect(photos()).toEqual([]);
     expect(sentTexts()).toEqual(["💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!"]);
+  });
+
+  it("con más de 6 personas la foto lleva 6 y el epígrafe nombra a todas", async () => {
+    for (let id = 1; id <= 7; id++) {
+      const from = { id: 100 + id, is_bot: false, first_name: `P${id}` };
+      await post({ update_id: id, message: message({ message_id: id, from }) });
+    }
+    const last = quickAction.mock.calls.at(-1)![1].html;
+    expect(last.match(/class="half[ "]/g)).toHaveLength(6);
+    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI de P1, P2, P3, P4, P5, P6 y P7 en 🧉 Boludle!");
   });
 
   it("mismo puntaje con otra grilla es matchi matchi común", async () => {
@@ -189,7 +262,7 @@ describe("aviso de matchi matchi", () => {
     await post({ update_id: 1, message: message() });
     await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otraGrilla }) });
     await post({ update_id: 3, message: message({ message_id: 3, from: juan }) });
-    expect(sentTexts().at(-1)).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy y Juan en 🧉 Boludle!");
+    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy y Juan en 🧉 Boludle!");
   });
 
   it("no avisa si el puntaje es distinto ni si reenvían el mismo resultado", async () => {
@@ -471,7 +544,7 @@ describe("ft", () => {
     await post({ update_id: 1, message: message({ message_id: 1, text: `${boludle}\nft Rafa` }) });
     expect(sentTexts()).toEqual(["🤝 Anotado también para Rafa en 🧉 Boludle"]);
     await post({ update_id: 2, message: message({ message_id: 2, from: tomer }) });
-    expect(sentTexts().at(-1)).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy, Rafa y Tomer en 🧉 Boludle!");
+    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy, Rafa y Tomer en 🧉 Boludle!");
   });
 
   it("el ft en el mensaje siguiente tampoco es matchi matchi en el resumen", async () => {

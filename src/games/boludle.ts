@@ -7,5 +7,6 @@ export const boludle: Game = {
   emoji: "🧉",
   url: "https://boludle.com",
   direction: "lower",
+  common: false,
   parse: (text) => parseAttempts(text, /boludle\.com\s+#(\d+)\s+(\d+|X)\s*\/\s*(\d+)/i),
 };

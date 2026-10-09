@@ -253,9 +253,17 @@ describe("aviso de matchi matchi", () => {
   });
 
   it("mismo puntaje con otra grilla es matchi matchi común", async () => {
+    const foxi = FIXTURES.find((f) => f.id === "foximax")!.text;
+    await post({ update_id: 1, message: message({ text: foxi }) });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: foxi.replace("⬜🟩🟩⬜🟩", "🟩⬜🟩⬜🟩") }) });
+    expect(sentTexts()).toEqual(["👯 ¡Cindy y Rafa hicieron matchi matchi en 🦊 FoxiMax!"]);
+  });
+
+  it("en Boludle el mismo puntaje con otra grilla no avisa", async () => {
     await post({ update_id: 1, message: message() });
     await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: otraGrilla }) });
-    expect(sentTexts()).toEqual(["👯 ¡Cindy y Rafa hicieron matchi matchi en 🧉 Boludle!"]);
+    expect(sent()).toEqual([]);
+    expect(photos()).toEqual([]);
   });
 
   it("si se suma alguien vuelve a avisar con los del MEGA", async () => {
@@ -535,8 +543,7 @@ describe("ft", () => {
     await post({ update_id: 2, message: message({ message_id: 2, text: `${boludle}\nft Rafa` }) });
     const { results } = await env.DB.prepare("SELECT user_name, pattern FROM results WHERE game = 'boludle' AND user_id = 2").all();
     expect(results).toEqual([{ user_name: "Rafa", pattern: expect.stringContaining("🟨⬜⬜⬜🟨") }]);
-    // El de Rafa es de otro mensaje: mismo puntaje con otra grilla es matchi matchi común.
-    expect(sentTexts()).toEqual(["👯 ¡Rafa y Cindy hicieron matchi matchi en 🧉 Boludle!"]);
+    expect(sent()).toEqual([]);
   });
 
   it("no hay matchi matchi dentro del ft, pero sí con alguien de afuera", async () => {

@@ -21,6 +21,8 @@ export interface Game {
   grid?: false;
   // false = nunca hay MEGA matchi matchi (en la Trivia coincidir en la grilla es fácil).
   mega?: false;
+  // false = solo cuenta el MEGA (en Boludle coincidir el puntaje es trivial).
+  common?: false;
   // Hora argentina en la que cambia el puzzle, si no es a la medianoche: desde esa hora lo que se manda
   // cuenta para el día siguiente (Pedantle cambia a las 16).
   dayStartsAt?: number;

@@ -298,12 +298,24 @@ describe("matchi matchi", () => {
 
   it("MEGA es mismo puntaje y misma grilla; común, mismo puntaje", () => {
     const rows = [
+      play(1, "Cindy", "foximax", D, "6/8", A),
+      play(2, "Rafa", "foximax", D, "6/8", A),
+      play(3, "Tomer", "foximax", D, "6/8", B),
+      play(4, "Lu", "foximax", D, "5/8", A),
+    ];
+    expect(twinGroups(rows, "foximax", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [["Cindy", "Rafa", "Tomer"]] });
+  });
+
+  it("en Boludle solo cuenta el MEGA: coincidir el puntaje es trivial", () => {
+    const rows = [
       play(1, "Cindy", "boludle", D, "4/6", A),
       play(2, "Rafa", "boludle", D, "4/6", A),
       play(3, "Tomer", "boludle", D, "4/6", B),
-      play(4, "Lu", "boludle", D, "5/6", A),
     ];
-    expect(twinGroups(rows, "boludle", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [["Cindy", "Rafa", "Tomer"]] });
+    expect(twinGroups(rows, "boludle", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
+    expect(twinsToday(rows, 3, D)).toEqual([]);
+    expect(historicTwin(rows, 3)).toBeNull();
+    expect(twinsToday(rows, 1, D)).toEqual([{ name: "Rafa", games: [{ game: "boludle", mega: true }] }]);
   });
 
   it("un MEGA solo no se repite como común", () => {

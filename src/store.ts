@@ -1,4 +1,4 @@
-import { hasMega } from "./games";
+import { hasCommon, hasMega } from "./games";
 
 export interface StoredResult {
   userId: number;
@@ -67,7 +67,7 @@ export interface Twin {
 }
 
 // Quienes ya mandaron el mismo puntaje en el mismo puzzle y día; MEGA si además coincide el detalle.
-// Los del mismo ft (mismo mensaje) no cuentan.
+// Los del mismo ft (mismo mensaje) no cuentan, y en los juegos sin común (Boludle) solo los MEGA.
 export async function findTwins(db: D1Database, result: NewResult): Promise<Twin[]> {
   if (result.pattern === null) return [];
   const { results } = await db
@@ -80,11 +80,9 @@ export async function findTwins(db: D1Database, result: NewResult): Promise<Twin
     .bind(result.chatId, result.game, result.puzzle, result.day, result.userId, result.messageId, result.display)
     .all<{ user_id: number; user_name: string; pattern: string }>();
   const megaPossible = result.pattern !== "" && hasMega(result.game);
-  return results.map((row) => ({
-    userId: row.user_id,
-    userName: row.user_name,
-    mega: megaPossible && row.pattern === result.pattern,
-  }));
+  return results
+    .map((row) => ({ userId: row.user_id, userName: row.user_name, mega: megaPossible && row.pattern === result.pattern }))
+    .filter((twin) => twin.mega || hasCommon(result.game));
 }
 
 // Los resultados del último mensaje con resultados de esa persona, si lo mandó desde `since`.

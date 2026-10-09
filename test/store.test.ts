@@ -38,16 +38,23 @@ describe("store", () => {
   });
 
   it("encuentra a quienes tienen el mismo puntaje y marca los MEGA", async () => {
-    const boludle = { ...base, puzzle: "1683", display: "4/6", pattern: "🟩🟩🟥" };
-    await saveResult(env.DB, { ...boludle, messageId: 1, userId: 1, userName: "Cindy" });
-    await saveResult(env.DB, { ...boludle, messageId: 2, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
-    await saveResult(env.DB, { ...boludle, messageId: 3, userId: 3, userName: "Lu", display: "5/6" });
-    await saveResult(env.DB, { ...boludle, messageId: 4, userId: 4, userName: "Viejo", pattern: null });
-    await saveResult(env.DB, { ...boludle, messageId: 5, userId: 5, userName: "Otro día", puzzle: "1682" });
-    expect(await findTwins(env.DB, { ...boludle, messageId: 6, userId: 6 })).toEqual([
+    const foxi = { ...base, game: "foximax", puzzle: "1488", display: "6/8", pattern: "🟩🟩🟥" };
+    await saveResult(env.DB, { ...foxi, messageId: 1, userId: 1, userName: "Cindy" });
+    await saveResult(env.DB, { ...foxi, messageId: 2, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
+    await saveResult(env.DB, { ...foxi, messageId: 3, userId: 3, userName: "Lu", display: "5/8" });
+    await saveResult(env.DB, { ...foxi, messageId: 4, userId: 4, userName: "Viejo", pattern: null });
+    await saveResult(env.DB, { ...foxi, messageId: 5, userId: 5, userName: "Otro día", puzzle: "1487" });
+    expect(await findTwins(env.DB, { ...foxi, messageId: 6, userId: 6 })).toEqual([
       { userId: 1, userName: "Cindy", mega: true },
       { userId: 2, userName: "Rafa", mega: false },
     ]);
+  });
+
+  it("en Boludle solo encuentra los MEGA", async () => {
+    const boludle = { ...base, puzzle: "1683", display: "4/6", pattern: "🟩🟩🟥" };
+    await saveResult(env.DB, { ...boludle, messageId: 1, userId: 1, userName: "Cindy" });
+    await saveResult(env.DB, { ...boludle, messageId: 2, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
+    expect(await findTwins(env.DB, { ...boludle, messageId: 3, userId: 3 })).toEqual([{ userId: 1, userName: "Cindy", mega: true }]);
   });
 
   it("en la Trivia y sin detalle nunca es MEGA", async () => {

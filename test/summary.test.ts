@@ -93,13 +93,13 @@ describe("buildSummary", () => {
   });
 
   it("muestra los MEGA y los matchi matchi de cada juego", () => {
-    const boludle = (userId: number, userName: string, display: string, pattern: string) =>
-      result({ userId, userName, game: "boludle", day: D, display, pattern });
+    const foximax = (userId: number, userName: string, display: string, pattern: string) =>
+      result({ userId, userName, game: "foximax", day: D, display, pattern });
     const rows = [
-      boludle(1, "Cindy", "4/6", "🟩🟩🟥"),
-      boludle(2, "Rafa", "4/6", "🟩🟩🟥"),
-      boludle(3, "Lu", "4/6", "🟩🟥🟩"),
-      boludle(4, "Juan", "5/6", "🟩🟥🟩"),
+      foximax(1, "Cindy", "4/8", "🟩🟩🟥"),
+      foximax(2, "Rafa", "4/8", "🟩🟩🟥"),
+      foximax(3, "Lu", "4/8", "🟩🟥🟩"),
+      foximax(4, "Juan", "5/8", "🟩🟥🟩"),
     ];
     const summary = buildSummary(rows, D)!;
     expect(summary).toContain("   💖 MEGA matchi matchi: Cindy y Rafa\n   👯 Matchi matchi: Cindy, Rafa y Lu");

@@ -1,5 +1,5 @@
 import { previousDay } from "./date";
-import { hasMega } from "./games";
+import { hasCommon, hasMega } from "./games";
 import type { Direction } from "./games/types";
 import type { StoredResult } from "./store";
 
@@ -266,7 +266,9 @@ export function goldMedals(valid: StoredResult[], game: string, direction: Direc
 }
 
 // Matchi matchi: el mismo resultado. null = guardado antes de que existiera la grilla: no se compara.
+// En los juegos sin común (Boludle) el único matchi es el MEGA.
 function matchKey(row: StoredResult): string | null {
+  if (!hasCommon(row.game)) return megaKey(row);
   return row.pattern === null ? null : row.display;
 }
 

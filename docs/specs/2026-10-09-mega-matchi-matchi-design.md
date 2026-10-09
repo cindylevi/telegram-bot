@@ -24,6 +24,7 @@ Además, cada persona puede elegir por privado qué foto usa el bot para ella en
 - **Mismo detalle:** la columna `pattern`. Hoy es la grilla de emojis; en Size It Up y MapTap pasa a ser el puntaje de cada ronda.
 - **Juegos sin mega:**
   - **La Trivia del Día:** solo matchi común, porque coincidir es fácil.
+- **Juegos con solo MEGA:** en **Boludle** coincidir el puntaje es trivial, así que no hay matchi común: solo cuenta el MEGA, en el aviso, el resumen y `/detalle` (también en el histórico). Agregado el 2026-10-09, después del primer deploy.
   - **Sin detalle** (Magnitudle, Originle): coincidir el puntaje es matchi común.
 - **Juegos con mega por rondas:** Size It Up (los cinco renglones `🟥🟥⬜️⬜️⬜️ 43`) y MapTap (`87🎓 92🏆 92🏆 82🌟 88🎉`). Matchi común = mismo total; mega = mismas rondas.
 - **Resultados viejos:** los guardados antes de esto tienen `pattern = ""` en Size It Up y MapTap, así que solo dan matchi común. Los de `pattern = NULL` siguen sin contar para nada.

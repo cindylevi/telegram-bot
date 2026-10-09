@@ -194,6 +194,7 @@ Dos personas hacen matchi matchi en un juego si ese día tienen el resultado id�
 - Aviso automático: apenas se guarda un resultado idéntico al de otra persona (mismo juego, puzzle y día), el bot manda al grupo `👯 ¡Cindy y Rafa hicieron matchi matchi en 🎓 La Trivia del Día!`. Si se suma alguien más, vuelve a avisar con todos. Un reenvío del mismo resultado no avisa (no se guarda).
 - En el resumen: una línea por juego con los grupos (`👯 Matchi matchi (Twinning): Cindy y Rafa · Lu y Juan`).
 - En `/detalle <persona>`: el matchi matchi histórico (con quien más veces coincidió, sumando juegos y días) y los de hoy, con los juegos.
+- Desde el 2026-10-09 hay dos niveles, matchi matchi y MEGA matchi matchi: ver `docs/specs/2026-10-09-mega-matchi-matchi-design.md`.
 
 ## Comandos
 

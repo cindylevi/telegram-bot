@@ -24,7 +24,7 @@
 
 ## Review Focus
 
-- **Emojis y fuentes en el Chrome de Cloudflare:** el navegador remoto corre en Linux y puede no tener fuente de emojis; los adornos se dibujan con SVG, no con emojis, y las tipografías de Google Fonts tienen que estar cargadas antes de la captura (`waitUntil: "networkidle0"`). Test en la Task 5: el HTML no contiene emojis y enlaza Bungee y Lobster.
+- **Emojis y fuentes en el Chrome de Cloudflare:** el navegador remoto corre en Linux y puede no tener fuente de emojis; los adornos se dibujan con SVG, no con emojis, y las tipografías de Google Fonts tienen que estar cargadas antes de la captura: `networkidle0` no alcanza (spike de la Task 1), así que el HTML marca `#fonts-ready` tras `document.fonts.ready` y el render lo espera con `waitForSelector`. Test en la Task 5: el HTML no contiene emojis, enlaza Bungee y Lobster y trae la marca.
 - **Nombres con caracteres de HTML o que empiezan con emoji:** la inicial sale de la primera letra o número del nombre y se escapa (`<`, `&`, comillas). Test en la Task 5.
 - **Falla la foto de una sola persona:** si `getFile` o la descarga fallan para alguien, esa persona va con su inicial y el mega sale igual con foto (no cae al texto). Test en la Task 7.
 - **Más de 6 personas en un mega:** la imagen muestra 6 franjas y el epígrafe nombra a todas. Test en la Task 7.
@@ -862,6 +862,12 @@ describe("megaHtml", () => {
     expect(html).toContain("family=Bungee&family=Lobster");
     expect(html).not.toMatch(/\p{Extended_Pictographic}/u);
   });
+
+  it("marca #fonts-ready cuando cargan las tipografías (el render espera esa marca)", () => {
+    const html = megaHtml([{ name: "Rafa", photo: photo(1) }]);
+    expect(html).toContain("document.fonts.ready.then(");
+    expect(html).toContain('id="fonts-ready"');
+  });
 });
 ```
 
@@ -966,8 +972,18 @@ export function megaHtml(faces: MegaFace[]): string {
 <div class="title"><span class="mega">MEGA</span><span>Matchi Matchi</span></div>
 <div class="heart-glow"></div><div class="heart">${heart}</div>
 ${seals}${decorations}
+${FONTS_READY}
 </body></html>`;
 }
+```
+
+y, arriba de `megaHtml`:
+
+```ts
+// En el Chrome de Cloudflare "networkidle0" no alcanza para que carguen Bungee y Lobster (spike de la
+// Task 1): el render espera este elemento, que aparece cuando terminan de cargar las tipografías.
+const FONTS_READY =
+  '<script>document.fonts.ready.then(() => document.body.insertAdjacentHTML("beforeend", \'<i id="fonts-ready"></i>\'))</script>';
 ```
 
 - [ ] **Step 5: Correr los tests**
@@ -1485,18 +1501,21 @@ export async function personPhoto(env: Env, userId: number): Promise<string | nu
 - [ ] **Step 6: `src/render.ts`**
 
 ```ts
-// HTML → PNG con Browser Rendering. Esperar la red deja cargar las tipografías de Google Fonts.
+// HTML → PNG con Browser Rendering. Espera la marca que pone megaHtml cuando cargan las tipografías.
 export async function renderPng(browser: BrowserRun, html: string): Promise<ArrayBuffer> {
   const response = await browser.quickAction("screenshot", {
     html,
     viewport: { width: 1080, height: 1080 },
     gotoOptions: { waitUntil: "networkidle0" },
+    waitForSelector: { selector: "#fonts-ready", timeout: 10000 },
     screenshotOptions: { type: "png" },
   });
   if (!response.ok) throw new Error(`screenshot ${response.status}: ${await response.text()}`);
   return response.arrayBuffer();
 }
 ```
+
+Un 429 (el plan gratis limita los pedidos seguidos al navegador) no se reintenta: `renderPng` tira y el MEGA cae al texto, como cualquier otra falla del render.
 
 - [ ] **Step 7: `announceMega` con foto y respaldo**
 

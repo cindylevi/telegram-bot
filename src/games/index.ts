@@ -10,16 +10,18 @@ import { maptap } from "./maptap";
 import { metazooa } from "./metazooa";
 import { minuteCryptic } from "./minuteCryptic";
 import { originle } from "./originle";
+import { pedantango } from "./pedantango";
 import { pedantle } from "./pedantle";
 import { poople } from "./poople";
 import { sizeItUp } from "./sizeItUp";
+import { smush } from "./smush";
 import { trivia } from "./trivia";
 import type { Game, ParsedResult } from "./types";
 
 export const GAMES: Game[] = [
   fourByThree, magnitudleDaily, sizeItUp, krillion, foxiMax, trivia,
   poople, metazooa, boludle, pedantle, catfishing, minuteCryptic, maptap, chainle,
-  cluesBySam, originle,
+  cluesBySam, originle, pedantango, smush,
 ];
 
 export interface Match {

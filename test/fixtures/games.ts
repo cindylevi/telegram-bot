@@ -243,4 +243,20 @@ https://originle.io/querubin/?day=4`,
 https://originle.io/mattias/?day=3`,
     expected: { puzzle: "3", score: 0, display: "0 · 5/8 pistas 🏳️" },
   },
+  {
+    id: "pedantango",
+    text: `pedantango #1 · lo saqué en 12 intentos
+🟩🟧🟧🟧🟧🟧🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+https://pedantango.compil.ar`,
+    expected: { puzzle: "1", score: 12, display: "12" },
+  },
+  {
+    id: "smush",
+    text: `hankgreen.com/smush · 25 oct
+441 pts · ★★ pangram first · 5-day streak
+🥞🥞🥞
+🥞⭐🟨
+🥞🥞🥞`,
+    expected: { puzzle: "10-25", score: 441, display: "441 · ★★" },
+  },
 ];

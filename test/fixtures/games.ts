@@ -260,6 +260,15 @@ https://pedantango.compil.ar`,
     expected: { puzzle: "10-25", score: 441, display: "441 · ★★" },
   },
   {
+    id: "smush",
+    text: `hankgreen.com/smush · Oct 30
+201 pts
+🥞🟩🟨
+🥞⭐🥞
+🥞🥞🥞`,
+    expected: { puzzle: "10-30", score: 201, display: "201" },
+  },
+  {
     id: "fermi",
     text: `Fermi · No. 95
 01 1.23×

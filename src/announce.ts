@@ -11,8 +11,10 @@ export interface MegaPerson {
   name: string;
 }
 
+// Un "MATCHI" por persona, con un mínimo de dos: entre 4 es "MEGA MATCHI MATCHI MATCHI MATCHI".
 export function megaCaption(game: Game, people: MegaPerson[]): string {
-  return `💖 ¡MEGA MATCHI MATCHI de ${joinNames(people.map((person) => person.name))} en ${game.emoji} ${game.name}!`;
+  const matchis = Array(Math.max(2, people.length)).fill("MATCHI").join(" ");
+  return `💖 ¡MEGA ${matchis} de ${joinNames(people.map((person) => person.name))} en ${game.emoji} ${game.name}!`;
 }
 
 // La foto del MEGA; si algo falla (cuota del navegador, Telegram), el epígrafe sale como texto.

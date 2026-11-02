@@ -38,12 +38,12 @@ describe("store", () => {
   });
 
   it("encuentra a quienes tienen el mismo puntaje y marca los MEGA", async () => {
-    const foxi = { ...base, game: "foximax", puzzle: "1488", display: "6/8", pattern: "🟩🟩🟥" };
+    const foxi = { ...base, game: "poople", puzzle: "405", display: "6/5", pattern: "🟩🟩🟥" };
     await saveResult(env.DB, { ...foxi, messageId: 1, userId: 1, userName: "Cindy" });
     await saveResult(env.DB, { ...foxi, messageId: 2, userId: 2, userName: "Rafa", pattern: "🟩🟥🟩" });
-    await saveResult(env.DB, { ...foxi, messageId: 3, userId: 3, userName: "Lu", display: "5/8" });
+    await saveResult(env.DB, { ...foxi, messageId: 3, userId: 3, userName: "Lu", display: "5/5" });
     await saveResult(env.DB, { ...foxi, messageId: 4, userId: 4, userName: "Viejo", pattern: null });
-    await saveResult(env.DB, { ...foxi, messageId: 5, userId: 5, userName: "Otro día", puzzle: "1487" });
+    await saveResult(env.DB, { ...foxi, messageId: 5, userId: 5, userName: "Otro día", puzzle: "404" });
     expect(await findTwins(env.DB, { ...foxi, messageId: 6, userId: 6 })).toEqual([
       { userId: 1, userName: "Cindy", mega: true },
       { userId: 2, userName: "Rafa", mega: false },

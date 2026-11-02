@@ -21,7 +21,7 @@ export interface Game {
   grid?: false;
   // false = nunca hay MEGA matchi matchi (en la Trivia coincidir en la grilla es fácil).
   mega?: false;
-  // false = solo cuenta el MEGA (en Boludle y Minute Cryptic coincidir el puntaje es trivial).
+  // false = solo cuenta el MEGA (en Boludle, Minute Cryptic y FoxiMax coincidir el puntaje es trivial).
   common?: false;
   // true = el común exige además la misma grilla (en la Trivia coincidir solo el puntaje es fácil).
   commonByPattern?: true;

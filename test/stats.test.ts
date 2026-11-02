@@ -298,12 +298,12 @@ describe("matchi matchi", () => {
 
   it("MEGA es mismo puntaje y misma grilla; común, mismo puntaje", () => {
     const rows = [
-      play(1, "Cindy", "foximax", D, "6/8", A),
-      play(2, "Rafa", "foximax", D, "6/8", A),
-      play(3, "Tomer", "foximax", D, "6/8", B),
-      play(4, "Lu", "foximax", D, "5/8", A),
+      play(1, "Cindy", "poople", D, "6/5", A),
+      play(2, "Rafa", "poople", D, "6/5", A),
+      play(3, "Tomer", "poople", D, "6/5", B),
+      play(4, "Lu", "poople", D, "5/5", A),
     ];
-    expect(twinGroups(rows, "foximax", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [["Cindy", "Rafa", "Tomer"]] });
+    expect(twinGroups(rows, "poople", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [["Cindy", "Rafa", "Tomer"]] });
   });
 
   it("en Boludle solo cuenta el MEGA: coincidir el puntaje es trivial", () => {
@@ -330,6 +330,15 @@ describe("matchi matchi", () => {
       play(3, "Tomer", "minute-cryptic", D, "1 pista", "⚪️🟣🟣\n3m 1s"),
     ];
     expect(twinGroups(rows, "minute-cryptic", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
+  });
+
+  it("en FoxiMax solo cuenta el MEGA: coincidir el puntaje no alcanza", () => {
+    const rows = [
+      play(1, "Cindy", "foximax", D, "6/8", A),
+      play(2, "Rafa", "foximax", D, "6/8", A),
+      play(3, "Tomer", "foximax", D, "6/8", B),
+    ];
+    expect(twinGroups(rows, "foximax", D)).toEqual({ mega: [["Cindy", "Rafa"]], common: [] });
   });
 
   it("en la Trivia el común exige la misma grilla y nunca es MEGA", () => {

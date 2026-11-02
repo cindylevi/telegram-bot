@@ -249,14 +249,14 @@ describe("aviso de matchi matchi", () => {
     }
     const last = quickAction.mock.calls.at(-1)![1].html;
     expect(last.match(/class="half[ "]/g)).toHaveLength(6);
-    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI de P1, P2, P3, P4, P5, P6 y P7 en 🧉 Boludle!");
+    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI MATCHI MATCHI MATCHI MATCHI MATCHI de P1, P2, P3, P4, P5, P6 y P7 en 🧉 Boludle!");
   });
 
   it("mismo puntaje con otra grilla es matchi matchi común", async () => {
-    const foxi = FIXTURES.find((f) => f.id === "foximax")!.text;
-    await post({ update_id: 1, message: message({ text: foxi }) });
-    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: foxi.replace("⬜🟩🟩⬜🟩", "🟩⬜🟩⬜🟩") }) });
-    expect(sentTexts()).toEqual(["👯 ¡Cindy y Rafa hicieron matchi matchi en 🦊 FoxiMax!"]);
+    const poople = FIXTURES.find((f) => f.id === "poople")!.text;
+    await post({ update_id: 1, message: message({ text: poople }) });
+    await post({ update_id: 2, message: message({ message_id: 2, from: rafa, text: poople.replace("⬜🟫🟫🟫", "🟫🟫🟫⬜") }) });
+    expect(sentTexts()).toEqual(["👯 ¡Cindy y Rafa hicieron matchi matchi en 🟫 Poople!"]);
   });
 
   it("en Boludle el mismo puntaje con otra grilla no avisa", async () => {
@@ -561,7 +561,7 @@ describe("ft", () => {
     await post({ update_id: 1, message: message({ message_id: 1, text: `${boludle}\nft Rafa` }) });
     expect(sentTexts()).toEqual(["🤝 Anotado también para Rafa en 🧉 Boludle"]);
     await post({ update_id: 2, message: message({ message_id: 2, from: tomer }) });
-    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI de Cindy, Rafa y Tomer en 🧉 Boludle!");
+    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI MATCHI de Cindy, Rafa y Tomer en 🧉 Boludle!");
   });
 
   it("el ft en el mensaje siguiente tampoco es matchi matchi en el resumen", async () => {

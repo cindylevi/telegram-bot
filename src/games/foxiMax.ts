@@ -7,5 +7,6 @@ export const foxiMax: Game = {
   emoji: "🦊",
   url: "https://foximax.com",
   direction: "lower",
+  common: false,
   parse: (text) => parseAttempts(text, /#FoxiMax\s+#(\d+)\s+(\d+|X)\s*\/\s*(\d+)/i),
 };

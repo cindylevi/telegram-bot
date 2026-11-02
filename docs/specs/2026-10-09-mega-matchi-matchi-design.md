@@ -27,6 +27,7 @@ Además, cada persona puede elegir por privado qué foto usa el bot para ella en
 - **Juegos con solo MEGA:** en **Boludle** coincidir el puntaje es trivial, así que no hay matchi común: solo cuenta el MEGA, en el aviso, el resumen y `/detalle` (también en el histórico). Agregado el 2026-10-09, después del primer deploy.
   - **Sin detalle** (Magnitudle, Originle): coincidir el puntaje es matchi común.
 - **Minute Cryptic:** el tiempo no cuenta para el ranking (el resultado son las pistas); va como último renglón del `pattern`, así que el MEGA pide mismas pistas, misma grilla y mismo tiempo. Como en Boludle, no hay matchi común: solo MEGA. La migración `0005` convierte los resultados guardados con el formato anterior. Agregado el 2026-10-09, después del primer deploy.
+- **FoxiMax:** tampoco hay matchi común, solo MEGA (misma grilla). Agregado el 2026-11-02.
 - **Juegos con mega por rondas:** Size It Up (los cinco renglones `🟥🟥⬜️⬜️⬜️ 43`) y MapTap (`87🎓 92🏆 92🏆 82🌟 88🎉`). Matchi común = mismo total; mega = mismas rondas.
 - **Resultados viejos:** los guardados antes de esto tienen `pattern = ""` en Size It Up y MapTap, así que solo dan matchi común. Los de `pattern = NULL` siguen sin contar para nada.
 - **ft:** dos resultados con el mismo `message_id` son un ft y no son matchi ni mega entre sí.
@@ -52,7 +53,7 @@ Una misma persona puede estar en un mega y en un matchi común del mismo juego a
 
 Al guardar un resultado, `findTwins` pasa a devolver a los que coinciden en `display`, cada uno marcado si además coincide en `pattern` (y el juego admite mega). Los del mismo mensaje se excluyen, como hoy.
 
-- **Hay alguno mega:** foto con el epígrafe `💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!`, con todos los del mega.
+- **Hay alguno mega:** foto con el epígrafe `💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!`, con todos los del mega. Lleva un "MATCHI" por persona: entre 3 es `MEGA MATCHI MATCHI MATCHI` (agregado el 2026-11-02).
 - **Solo comunes:** el texto de siempre, `👯 ¡Cindy y Rafa hicieron matchi matchi en 🧉 Boludle!`.
 - **Se suma alguien:** se vuelve a avisar con todos: foto nueva si coincide en el detalle, texto si solo coincide en el puntaje.
 

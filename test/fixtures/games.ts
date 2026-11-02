@@ -259,4 +259,15 @@ https://pedantango.compil.ar`,
 🥞🥞🥞`,
     expected: { puzzle: "10-25", score: 441, display: "441 · ★★" },
   },
+  {
+    id: "fermi",
+    text: `Fermi · No. 95
+01 1.23×
+02 12.0×
+03 87.5×
+─────────
+10.9× score · top 84%
+<https://fermi.gg/s/daily>`,
+    expected: { puzzle: "95", score: 10.9, display: "10.9×", pattern: "1.23× 12.0× 87.5×" },
+  },
 ];

@@ -3,6 +3,7 @@ import { catfishing } from "./catfishing";
 import { chainle } from "./chainle";
 import { cluesBySam } from "./cluesBySam";
 import { fourByThree } from "./fourByThree";
+import { fermi } from "./fermi";
 import { foxiMax } from "./foxiMax";
 import { krillion } from "./krillion";
 import { magnitudleDaily } from "./magnitudleDaily";
@@ -21,7 +22,7 @@ import type { Game, ParsedResult } from "./types";
 export const GAMES: Game[] = [
   fourByThree, magnitudleDaily, sizeItUp, krillion, foxiMax, trivia,
   poople, metazooa, boludle, pedantle, catfishing, minuteCryptic, maptap, chainle,
-  cluesBySam, originle, pedantango, smush,
+  cluesBySam, originle, pedantango, smush, fermi,
 ];
 
 export interface Match {

@@ -23,7 +23,7 @@ function initial(name: string): string {
 function stripe(face: MegaFace, index: number, count: number, maxSize = Infinity): string {
   if (face.photo) return `<div class="half" style="background-image:url('${face.photo}')"></div>`;
   const color = INITIAL_COLORS[index % INITIAL_COLORS.length];
-  const size = Math.min(INITIAL_SIZES[count], maxSize);
+  const size = Math.min(INITIAL_SIZES[Math.min(count, INITIAL_SIZES.length - 1)], maxSize);
   return `<div class="half initial" style="background:${color};font-size:${size}px">${initial(face.name)}</div>`;
 }
 
@@ -42,8 +42,8 @@ const DECORATIONS: [string, string, string, number][] = [
 ];
 
 const decorations = DECORATIONS.map(
-  ([shape, color, position, size]) =>
-    `<svg class="deco" style="${position}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}">${shape}</svg>`,
+  ([shape, color, position, size], i) =>
+    `<svg class="deco d${i + 1}" style="${position}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}">${shape}</svg>`,
 ).join("");
 
 const seals = Array.from({ length: 8 }, (_, i) => `<img class="seal s${i + 1}" src="${FOCA}">`).join("");
@@ -82,15 +82,18 @@ body{width:1080px;height:1080px;overflow:hidden;position:relative;font-family:'L
 .s7{width:140px;height:140px;left:610px;bottom:10px;transform:rotate(15deg) scaleX(-1)}
 .s8{width:95px;height:95px;left:250px;top:250px;transform:rotate(-20deg)}
 .deco{position:absolute}
-.big .heart,.big .heart-glow{top:665px;transform:translate(-50%,-50%) scale(1.15)}
-.big .s2{left:-60px}
-.big .s4{right:-70px;top:250px}
-.big .s5{right:-30px;top:540px}
-.big .s7{left:720px;bottom:-20px}
-.big .s8{left:200px;top:236px}
+.big .heart,.big .heart-glow{top:680px;transform:translate(-50%,-50%) scale(1.3)}
+.big .s1{left:-30px;top:250px}
+.big .s2{left:-110px;top:450px}
+.big .s3{left:-60px;bottom:-60px}
+.big .s4{right:-120px;top:240px}
+.big .s5{right:-75px;top:520px}
+.big .s6{right:-70px;bottom:40px}
+.big .s7{left:820px;bottom:-40px}
+.big .s8,.big .d3{display:none}
 .floor{display:flex}
-.floor.top{flex:56}
-.floor.bottom{flex:44;margin:0 95px;border-top:6px solid #fff}
+.floor.top{flex:46}
+.floor.bottom{flex:54;margin:0 95px;border-top:6px solid #fff}
 .floor.bottom .half{background-position:center 25%}
 .floor.bottom .initial{align-items:flex-start;padding-top:24px}`;
 

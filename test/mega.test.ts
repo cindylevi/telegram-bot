@@ -46,6 +46,9 @@ describe("megaHtml", () => {
     const [top, bottom] = ten.split('class="floor bottom"');
     expect(stripes(top)).toBe(6);
     expect(stripes(bottom)).toBe(4);
+    const twelve = megaHtml(people(12).map((p) => ({ ...p, photo: null })));
+    expect(twelve).not.toContain("NaN");
+    expect(twelve).toMatch(/font-size:\d+px/);
     const fourteen = megaHtml(people(14));
     expect(stripes(fourteen)).toBe(12);
     expect(fourteen).not.toContain(photo(12));

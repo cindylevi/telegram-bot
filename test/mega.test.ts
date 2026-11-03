@@ -3,6 +3,7 @@ import { FOCA } from "../src/assets/foca";
 import { megaHtml } from "../src/mega";
 
 const photo = (n: number) => `data:image/jpeg;base64,FOTO${n}`;
+const bubbles = (html: string) => html.match(/class="bubble[ "]/g)?.length ?? 0;
 const stripes = (html: string) => html.match(/class="half[ "]/g)?.length ?? 0;
 
 describe("megaHtml", () => {
@@ -28,9 +29,26 @@ describe("megaHtml", () => {
     expect(megaHtml([{ name: "🦊", photo: null }])).toMatch(/>\?<\/div>/);
   });
 
-  it("a lo sumo 6 franjas", () => {
-    const seven = Array.from({ length: 7 }, (_, i) => ({ name: `P${i}`, photo: photo(i) }));
-    expect(stripes(megaHtml(seven))).toBe(6);
+  it("hasta 6 en el corazón; sin más gente no hay fila de abajo", () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({ name: `P${i}`, photo: photo(i) }));
+    const html = megaHtml(six);
+    expect(stripes(html)).toBe(6);
+    expect(bubbles(html)).toBe(0);
+    expect(html).not.toContain('class="crowd"');
+  });
+
+  it("de la 7 a la 12 van en la fila de abajo, y más no entran", () => {
+    const people = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `P${i}`, photo: i === 7 ? null : photo(i) }));
+    const nine = megaHtml(people(9));
+    expect(stripes(nine)).toBe(6);
+    expect(bubbles(nine)).toBe(3);
+    expect(nine).toContain('class="crowd"');
+    expect(nine).toContain(`url('${photo(6)}')`);
+    expect(nine).toMatch(/class="bubble initial"[^>]*>P<\/div>/);
+    const fourteen = megaHtml(people(14));
+    expect(stripes(fourteen)).toBe(6);
+    expect(bubbles(fourteen)).toBe(6);
+    expect(fourteen).not.toContain(photo(12));
   });
 
   it("ocho focas, las tipografías y ningún emoji (el Chrome remoto puede no tener fuente de emojis)", () => {

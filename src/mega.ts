@@ -6,7 +6,9 @@ export interface MegaFace {
   photo: string | null;
 }
 
-export const MAX_FACES = 6;
+// Hasta 6 van en franjas del corazón; de la 7 a la 12, en una fila de fotos redondas abajo.
+const HEART_FACES = 6;
+export const MAX_FACES = 12;
 
 const INITIAL_COLORS = ["#e8457f", "#9b5de5", "#f15bb5", "#00a6a6", "#f77f00", "#3a86ff"];
 const INITIAL_SIZES = [300, 300, 300, 150, 120, 100, 90];
@@ -16,6 +18,12 @@ const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${cha
 function initial(name: string): string {
   const letter = [...name].find((char) => /[\p{L}\p{N}]/u.test(char));
   return escapeHtml(letter ? letter.toUpperCase() : "?");
+}
+
+function bubble(face: MegaFace, index: number): string {
+  if (face.photo) return `<div class="bubble" style="background-image:url('${face.photo}')"></div>`;
+  const color = INITIAL_COLORS[index % INITIAL_COLORS.length];
+  return `<div class="bubble initial" style="background:${color}">${initial(face.name)}</div>`;
 }
 
 function stripe(face: MegaFace, index: number, count: number): string {
@@ -40,7 +48,7 @@ const DECORATIONS: [string, string, string, number][] = [
 
 const decorations = DECORATIONS.map(
   ([shape, color, position, size]) =>
-    `<svg class="deco" style="${position}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}">${shape}</svg>`,
+    `<svg class="deco${position.includes("bottom") ? " low" : ""}" style="${position}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}">${shape}</svg>`,
 ).join("");
 
 const seals = Array.from({ length: 8 }, (_, i) => `<img class="seal s${i + 1}" src="${FOCA}">`).join("");
@@ -78,7 +86,12 @@ body{width:1080px;height:1080px;overflow:hidden;position:relative;font-family:'L
 .s6{width:200px;height:200px;right:10px;bottom:118px;transform:rotate(5deg)}
 .s7{width:140px;height:140px;left:610px;bottom:10px;transform:rotate(15deg) scaleX(-1)}
 .s8{width:95px;height:95px;left:250px;top:250px;transform:rotate(-20deg)}
-.deco{position:absolute}`;
+.deco{position:absolute}
+.crowd .heart,.crowd .heart-glow{top:600px;transform:translate(-50%,-50%) scale(.88)}
+.crowd .s3,.crowd .s6,.crowd .s7,.crowd .low{display:none}
+.row{position:absolute;bottom:22px;left:0;width:100%;display:flex;justify-content:center;gap:16px}
+.bubble{width:140px;height:140px;border-radius:50%;background-size:cover;background-position:center;font-size:70px;
+ border:7px solid #fff;box-shadow:0 0 0 4px #ff7ac4,0 8px 20px rgba(120,0,50,.35)}`;
 
 // En el Chrome de Cloudflare "networkidle0" no alcanza para que carguen Bungee y Lobster (spike de la
 // Task 1): el render espera este elemento, que aparece cuando terminan de cargar las tipografías.
@@ -87,15 +100,19 @@ const FONTS_READY =
 
 // La foto del MEGA matchi matchi: el diseño aprobado el 2026-10-09 (v8).
 export function megaHtml(faces: MegaFace[]): string {
-  const shown = faces.slice(0, MAX_FACES);
-  const heart = shown.map((face, i) => stripe(face, i, shown.length)).join("");
+  const inHeart = faces.slice(0, HEART_FACES);
+  const below = faces.slice(HEART_FACES, MAX_FACES);
+  const heart = inHeart.map((face, i) => stripe(face, i, inHeart.length)).join("");
+  const row = below.length
+    ? `<div class="row">${below.map((face, i) => bubble(face, HEART_FACES + i)).join("")}</div>`
+    : "";
   return `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lobster&display=swap" rel="stylesheet">
-<style>${STYLE}</style></head><body>
+<style>${STYLE}</style></head><body${below.length ? ' class="crowd"' : ""}>
 <div class="sparkles"></div>
 <div class="title"><span class="mega">MEGA</span><span>Matchi Matchi</span></div>
 <div class="heart-glow"></div><div class="heart">${heart}</div>
-${seals}${decorations}
+${seals}${decorations}${row}
 ${FONTS_READY}
 </body></html>`;
 }

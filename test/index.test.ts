@@ -242,14 +242,15 @@ describe("aviso de matchi matchi", () => {
     expect(sentTexts()).toEqual(["💖 ¡MEGA MATCHI MATCHI de Cindy y Rafa en 🧉 Boludle!"]);
   });
 
-  it("con más de 6 personas la foto lleva 6 y el epígrafe nombra a todas", async () => {
-    for (let id = 1; id <= 7; id++) {
+  it("con más de 12 personas la foto lleva 12 y el epígrafe nombra a todas", async () => {
+    for (let id = 1; id <= 13; id++) {
       const from = { id: 100 + id, is_bot: false, first_name: `P${id}` };
       await post({ update_id: id, message: message({ message_id: id, from }) });
     }
     const last = quickAction.mock.calls.at(-1)![1].html;
-    expect(last.match(/class="half[ "]/g)).toHaveLength(6);
-    expect(photos().at(-1)!.caption).toBe("💖 ¡MEGA MATCHI MATCHI MATCHI MATCHI MATCHI MATCHI MATCHI de P1, P2, P3, P4, P5, P6 y P7 en 🧉 Boludle!");
+    expect(last.match(/class="half[ "]/g)).toHaveLength(12);
+    const people = Array.from({ length: 12 }, (_, i) => `P${i + 1}`).join(", ");
+    expect(photos().at(-1)!.caption).toBe(`💖 ¡MEGA ${Array(13).fill("MATCHI").join(" ")} de ${people} y P13 en 🧉 Boludle!`);
   });
 
   it("mismo puntaje con otra grilla es matchi matchi común", async () => {

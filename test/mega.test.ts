@@ -3,7 +3,7 @@ import { FOCA } from "../src/assets/foca";
 import { megaHtml } from "../src/mega";
 
 const photo = (n: number) => `data:image/jpeg;base64,FOTO${n}`;
-const bubbles = (html: string) => html.match(/class="bubble[ "]/g)?.length ?? 0;
+const floors = (html: string) => html.match(/class="floor /g)?.length ?? 0;
 const stripes = (html: string) => html.match(/class="half[ "]/g)?.length ?? 0;
 
 describe("megaHtml", () => {
@@ -29,25 +29,23 @@ describe("megaHtml", () => {
     expect(megaHtml([{ name: "🦊", photo: null }])).toMatch(/>\?<\/div>/);
   });
 
-  it("hasta 6 en el corazón; sin más gente no hay fila de abajo", () => {
+  it("hasta 6, una sola fila de franjas", () => {
     const six = Array.from({ length: 6 }, (_, i) => ({ name: `P${i}`, photo: photo(i) }));
     const html = megaHtml(six);
     expect(stripes(html)).toBe(6);
-    expect(bubbles(html)).toBe(0);
-    expect(html).not.toContain('class="crowd"');
+    expect(floors(html)).toBe(0);
   });
 
-  it("de la 7 a la 12 van en la fila de abajo, y más no entran", () => {
-    const people = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `P${i}`, photo: i === 7 ? null : photo(i) }));
-    const nine = megaHtml(people(9));
-    expect(stripes(nine)).toBe(6);
-    expect(bubbles(nine)).toBe(3);
-    expect(nine).toContain('class="crowd"');
-    expect(nine).toContain(`url('${photo(6)}')`);
-    expect(nine).toMatch(/class="bubble initial"[^>]*>P<\/div>/);
+  it("de 7 a 12 el corazón se parte en dos pisos, con más gente arriba; más de 12 no entran", () => {
+    const people = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `P${i}`, photo: photo(i) }));
+    const ten = megaHtml(people(10));
+    expect(stripes(ten)).toBe(10);
+    expect(floors(ten)).toBe(2);
+    const [top, bottom] = ten.split('class="floor bottom"');
+    expect(stripes(top)).toBe(6);
+    expect(stripes(bottom)).toBe(4);
     const fourteen = megaHtml(people(14));
-    expect(stripes(fourteen)).toBe(6);
-    expect(bubbles(fourteen)).toBe(6);
+    expect(stripes(fourteen)).toBe(12);
     expect(fourteen).not.toContain(photo(12));
   });
 

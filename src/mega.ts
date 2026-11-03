@@ -6,8 +6,8 @@ export interface MegaFace {
   photo: string | null;
 }
 
-// Hasta 6 van en franjas del corazón; de la 7 a la 12, en una fila de fotos redondas abajo.
-const HEART_FACES = 6;
+// Hasta 6 van en una sola fila de franjas; de 7 a 12, el corazón se parte en dos pisos.
+const ROW_FACES = 6;
 export const MAX_FACES = 12;
 
 const INITIAL_COLORS = ["#e8457f", "#9b5de5", "#f15bb5", "#00a6a6", "#f77f00", "#3a86ff"];
@@ -20,16 +20,11 @@ function initial(name: string): string {
   return escapeHtml(letter ? letter.toUpperCase() : "?");
 }
 
-function bubble(face: MegaFace, index: number): string {
-  if (face.photo) return `<div class="bubble" style="background-image:url('${face.photo}')"></div>`;
-  const color = INITIAL_COLORS[index % INITIAL_COLORS.length];
-  return `<div class="bubble initial" style="background:${color}">${initial(face.name)}</div>`;
-}
-
-function stripe(face: MegaFace, index: number, count: number): string {
+function stripe(face: MegaFace, index: number, count: number, maxSize = Infinity): string {
   if (face.photo) return `<div class="half" style="background-image:url('${face.photo}')"></div>`;
   const color = INITIAL_COLORS[index % INITIAL_COLORS.length];
-  return `<div class="half initial" style="background:${color};font-size:${INITIAL_SIZES[count]}px">${initial(face.name)}</div>`;
+  const size = Math.min(INITIAL_SIZES[count], maxSize);
+  return `<div class="half initial" style="background:${color};font-size:${size}px">${initial(face.name)}</div>`;
 }
 
 // Adornos dibujados con SVG: el Chrome de Cloudflare puede no tener fuente de emojis.
@@ -48,7 +43,7 @@ const DECORATIONS: [string, string, string, number][] = [
 
 const decorations = DECORATIONS.map(
   ([shape, color, position, size]) =>
-    `<svg class="deco${position.includes("bottom") ? " low" : ""}" style="${position}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}">${shape}</svg>`,
+    `<svg class="deco" style="${position}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}">${shape}</svg>`,
 ).join("");
 
 const seals = Array.from({ length: 8 }, (_, i) => `<img class="seal s${i + 1}" src="${FOCA}">`).join("");
@@ -70,7 +65,7 @@ body{width:1080px;height:1080px;overflow:hidden;position:relative;font-family:'L
  -webkit-background-clip:text;background-clip:text;color:transparent;
  -webkit-text-stroke:3px #b8005c;filter:drop-shadow(0 0 10px #fff) drop-shadow(0 6px 0 #8a0045) drop-shadow(0 0 30px #ff5fae)}
 .title .mega{font-family:'Bungee',sans-serif;font-size:118px;letter-spacing:6px;margin-bottom:-4px}
-.heart{position:absolute;left:50%;top:650px;width:640px;height:580px;transform:translate(-50%,-50%);display:flex;background:#ff4f9b;
+.heart{position:absolute;left:50%;top:650px;width:640px;height:580px;transform:translate(-50%,-50%);display:flex;flex-direction:column;background:#fff;
  clip-path:path('M320 560 C 120 420, 0 300, 0 170 C 0 70, 80 0, 175 0 C 240 0, 295 35, 320 90 C 345 35, 400 0, 465 0 C 560 0, 640 70, 640 170 C 640 300, 520 420, 320 560 Z')}
 .heart-glow{position:absolute;left:50%;top:650px;width:680px;height:620px;transform:translate(-50%,-50%);background:#fff;opacity:.85;
  clip-path:path('M340 600 C 128 450, 0 322, 0 182 C 0 75, 85 0, 186 0 C 255 0, 313 37, 340 96 C 367 37, 425 0, 494 0 C 595 0, 680 75, 680 182 C 680 322, 552 450, 340 600 Z')}
@@ -87,11 +82,11 @@ body{width:1080px;height:1080px;overflow:hidden;position:relative;font-family:'L
 .s7{width:140px;height:140px;left:610px;bottom:10px;transform:rotate(15deg) scaleX(-1)}
 .s8{width:95px;height:95px;left:250px;top:250px;transform:rotate(-20deg)}
 .deco{position:absolute}
-.crowd .heart,.crowd .heart-glow{top:600px;transform:translate(-50%,-50%) scale(.88)}
-.crowd .s3,.crowd .s6,.crowd .s7,.crowd .low{display:none}
-.row{position:absolute;bottom:22px;left:0;width:100%;display:flex;justify-content:center;gap:16px}
-.bubble{width:140px;height:140px;border-radius:50%;background-size:cover;background-position:center;font-size:70px;
- border:7px solid #fff;box-shadow:0 0 0 4px #ff7ac4,0 8px 20px rgba(120,0,50,.35)}`;
+.floor{display:flex}
+.floor.top{flex:56}
+.floor.bottom{flex:44;margin:0 95px;border-top:6px solid #fff}
+.floor.bottom .half{background-position:center 25%}
+.floor.bottom .initial{align-items:flex-start;padding-top:24px}`;
 
 // En el Chrome de Cloudflare "networkidle0" no alcanza para que carguen Bungee y Lobster (spike de la
 // Task 1): el render espera este elemento, que aparece cuando terminan de cargar las tipografías.
@@ -100,19 +95,22 @@ const FONTS_READY =
 
 // La foto del MEGA matchi matchi: el diseño aprobado el 2026-10-09 (v8).
 export function megaHtml(faces: MegaFace[]): string {
-  const inHeart = faces.slice(0, HEART_FACES);
-  const below = faces.slice(HEART_FACES, MAX_FACES);
-  const heart = inHeart.map((face, i) => stripe(face, i, inHeart.length)).join("");
-  const row = below.length
-    ? `<div class="row">${below.map((face, i) => bubble(face, HEART_FACES + i)).join("")}</div>`
-    : "";
+  const shown = faces.slice(0, MAX_FACES);
+  const stripes = (row: MegaFace[], offset: number, maxSize?: number) =>
+    row.map((face, i) => stripe(face, offset + i, row.length, maxSize)).join("");
+  let heart = stripes(shown, 0);
+  if (shown.length > ROW_FACES) {
+    // Arriba entra más gente: abajo el corazón se angosta hasta la punta.
+    const top = Math.ceil(shown.length * 0.55);
+    heart = `<div class="floor top">${stripes(shown.slice(0, top), 0, 110)}</div><div class="floor bottom">${stripes(shown.slice(top), top, 90)}</div>`;
+  }
   return `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lobster&display=swap" rel="stylesheet">
-<style>${STYLE}</style></head><body${below.length ? ' class="crowd"' : ""}>
+<style>${STYLE}</style></head><body>
 <div class="sparkles"></div>
 <div class="title"><span class="mega">MEGA</span><span>Matchi Matchi</span></div>
 <div class="heart-glow"></div><div class="heart">${heart}</div>
-${seals}${decorations}${row}
+${seals}${decorations}
 ${FONTS_READY}
 </body></html>`;
 }

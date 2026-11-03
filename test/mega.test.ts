@@ -34,6 +34,7 @@ describe("megaHtml", () => {
     const html = megaHtml(six);
     expect(stripes(html)).toBe(6);
     expect(floors(html)).toBe(0);
+    expect(html).not.toContain('class="big"');
   });
 
   it("de 7 a 12 el corazón se parte en dos pisos, con más gente arriba; más de 12 no entran", () => {
@@ -41,6 +42,7 @@ describe("megaHtml", () => {
     const ten = megaHtml(people(10));
     expect(stripes(ten)).toBe(10);
     expect(floors(ten)).toBe(2);
+    expect(ten).toContain('<body class="big">');
     const [top, bottom] = ten.split('class="floor bottom"');
     expect(stripes(top)).toBe(6);
     expect(stripes(bottom)).toBe(4);

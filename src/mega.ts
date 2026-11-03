@@ -82,6 +82,12 @@ body{width:1080px;height:1080px;overflow:hidden;position:relative;font-family:'L
 .s7{width:140px;height:140px;left:610px;bottom:10px;transform:rotate(15deg) scaleX(-1)}
 .s8{width:95px;height:95px;left:250px;top:250px;transform:rotate(-20deg)}
 .deco{position:absolute}
+.big .heart,.big .heart-glow{top:665px;transform:translate(-50%,-50%) scale(1.15)}
+.big .s2{left:-60px}
+.big .s4{right:-70px;top:250px}
+.big .s5{right:-30px;top:540px}
+.big .s7{left:720px;bottom:-20px}
+.big .s8{left:200px;top:236px}
 .floor{display:flex}
 .floor.top{flex:56}
 .floor.bottom{flex:44;margin:0 95px;border-top:6px solid #fff}
@@ -106,7 +112,7 @@ export function megaHtml(faces: MegaFace[]): string {
   }
   return `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lobster&display=swap" rel="stylesheet">
-<style>${STYLE}</style></head><body>
+<style>${STYLE}</style></head><body${shown.length > ROW_FACES ? ' class="big"' : ""}>
 <div class="sparkles"></div>
 <div class="title"><span class="mega">MEGA</span><span>Matchi Matchi</span></div>
 <div class="heart-glow"></div><div class="heart">${heart}</div>

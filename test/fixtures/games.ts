@@ -49,6 +49,16 @@ Score: 70/100
     expected: { puzzle: "S20-Q02", score: 70, display: "70/100" },
   },
   {
+    id: "magnitudle",
+    text: `Magnitudle — Daily Question
+2026-11-03 · S24 · Q02
+
+Score: 86/100
+
+🟥🟥🟥🟥⬜ 86 https://magnitudle.com/daily`,
+    expected: { puzzle: "S24-Q02", score: 86, display: "86/100" },
+  },
+  {
     id: "size-it-up",
     text: `Size It Up
 Overall Score 185

@@ -35,6 +35,9 @@ describe("megaHtml", () => {
     expect(stripes(html)).toBe(6);
     expect(floors(html)).toBe(0);
     expect(html).not.toContain('class="big"');
+    // Con 6 o menos el corazón es el de siempre: franjas lado a lado, fondo rosa.
+    expect(html).toMatch(/\.heart\{[^}]*display:flex;background:#ff4f9b;/);
+    expect(html).not.toMatch(/(^|\n)\.heart\{[^}]*flex-direction/);
   });
 
   it("de 7 a 12 el corazón se parte en dos pisos, con más gente arriba; más de 12 no entran", () => {

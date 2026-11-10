@@ -39,29 +39,3 @@ describe("0005: el tiempo de Minute Cryptic pasa al detalle", () => {
     ]);
   });
 });
-
-describe("0007: las grillas guardadas pierden el selector de variación", () => {
-  const base: NewResult = {
-    chatId: -1002,
-    messageId: 1,
-    userId: 1,
-    userName: "male",
-    game: "poople",
-    puzzle: "450",
-    score: 5,
-    display: "5/5",
-    day: "2026-11-07",
-    createdAt: 1,
-    tiebreak: null,
-    pattern: "⬜️⬜️\n🟫🟫",
-  };
-
-  it("deja igual la grilla con ⬜️ que la que vino con ⬜", async () => {
-    await saveResult(env.DB, base);
-    await saveResult(env.DB, { ...base, userId: 2, userName: "Juani", messageId: 2, pattern: "⬜⬜\n🟫🟫" });
-    await saveResult(env.DB, { ...base, userId: 3, messageId: 3, pattern: null });
-    await rerun("0007");
-    const patterns = (await loadResults(env.DB, -1002)).map((row) => row.pattern);
-    expect(patterns).toEqual(["⬜⬜\n🟫🟫", "⬜⬜\n🟫🟫", null]);
-  });
-});

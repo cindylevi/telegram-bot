@@ -71,6 +71,12 @@ function blockStart(game: Game, lines: string[]): number {
   return 0;
 }
 
+// Según el teclado, el mismo emoji llega como "⬜️" (con U+FE0F) o como "⬜": se sacan para que las grillas
+// que se ven iguales sean iguales al compararlas en los matchi matchi.
+function withoutVariationSelectors(pattern: string): string {
+  return pattern.replace(/[\uFE0E\uFE0F]/gu, "");
+}
+
 // Un mensaje puede traer varios resultados pegados juntos: se devuelve uno por juego,
 // cada uno con la grilla de emojis de su propio bloque.
 export function parseResults(text: string): Match[] {
@@ -90,7 +96,7 @@ export function parseResults(text: string): Match[] {
         .map((line) => line.trim())
         .filter((line) => GRID_LINE.test(line))
         .join("\n");
-    const pattern = match.result.pattern ?? (match.game.grid === false ? "" : grid());
+    const pattern = withoutVariationSelectors(match.result.pattern ?? (match.game.grid === false ? "" : grid()));
     return { game: match.game, result: { ...match.result, pattern }, line: starts[i] };
   });
 }

@@ -89,6 +89,15 @@ describe("pattern", () => {
     expect(single(byId("magnitudle"))?.result.pattern).toBe("");
   });
 
+  // Algunos teclados mandan "⬜️" (con U+FE0F) y otros "⬜": se ven iguales y tienen que ser la misma grilla.
+  it("no distingue los emojis con y sin selector de variación", () => {
+    const poople = "Poople #450 5/5\n⬜️⬜️⬜️⬜️\n🟫⬜️⬜️⬜️\n🟫🟫🟫🟫\npoople.io";
+    const plain = "Poople #450 5/5\n⬜⬜⬜⬜\n🟫⬜⬜⬜\n🟫🟫🟫🟫\npoople.io";
+    expect(single(poople)?.result.pattern).toBe(single(plain)?.result.pattern);
+    expect(single(poople)?.result.pattern).not.toContain("\uFE0F");
+    expect(single(byId("perceptle"))?.result.pattern).not.toContain("\uFE0F");
+  });
+
   it("en un mensaje con varios juegos cada uno se queda con su propia grilla", () => {
     const matches = parseResults(`${byId("boludle")}\n\n${byId("trivia")}`);
     const pattern = (id: string) => matches.find((m) => m.game.id === id)?.result.pattern;

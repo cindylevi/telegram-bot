@@ -73,7 +73,7 @@ https://magnitudle.com/size-it-up`,
       puzzle: null,
       score: 185,
       display: "185",
-      pattern: "🟥🟥⬜️⬜️⬜️ 43\n🟥🟥🟥🟥⬜️ 74\n🟥🟥⬜️⬜️⬜️ 30\n🟥🟥⬜️⬜️⬜️ 30\n⬜️⬜️⬜️⬜️⬜️ 8",
+      pattern: "🟥🟥⬜⬜⬜ 43\n🟥🟥🟥🟥⬜ 74\n🟥🟥⬜⬜⬜ 30\n🟥🟥⬜⬜⬜ 30\n⬜⬜⬜⬜⬜ 8",
     },
   },
   {
@@ -189,7 +189,7 @@ https://www.minutecryptic.com/?utm_source=share`,
 🏆 1 hints – 1 under the community par (154,463 solvers so far). Time: 24m 12s.
 https://www.minutecryptic.com/?utm_source=share`,
     // El tiempo no cuenta para el ranking: solo para el MEGA matchi matchi, como parte del detalle.
-    expected: { puzzle: "2026-09-23", score: 1, display: "1 pista", tiebreak: null, pattern: "⚪️🟣🟣🟣🟣🟣🟣🟣🟣🟣🟣🟣\n24m 12s" },
+    expected: { puzzle: "2026-09-23", score: 1, display: "1 pista", tiebreak: null, pattern: "⚪🟣🟣🟣🟣🟣🟣🟣🟣🟣🟣🟣\n24m 12s" },
   },
   {
     id: "maptap",
@@ -294,6 +294,6 @@ https://pedantango.compil.ar`,
     text: `Perceptle #116 - D (47)
 🔢 9 🎯 0 📐 70 🥁 56 ✂️ 100
 https://perceptle.com`,
-    expected: { puzzle: "116", score: 47, display: "D · 47", pattern: "🔢 9 🎯 0 📐 70 🥁 56 ✂️ 100" },
+    expected: { puzzle: "116", score: 47, display: "D · 47", pattern: "🔢 9 🎯 0 📐 70 🥁 56 ✂ 100" },
   },
 ];

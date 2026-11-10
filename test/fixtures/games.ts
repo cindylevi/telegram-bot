@@ -289,4 +289,11 @@ https://pedantango.compil.ar`,
 <https://fermi.gg/s/daily>`,
     expected: { puzzle: "95", score: 10.9, display: "10.9×", pattern: "1.23× 12.0× 87.5×" },
   },
+  {
+    id: "perceptle",
+    text: `Perceptle #116 - D (47)
+🔢 9 🎯 0 📐 70 🥁 56 ✂️ 100
+https://perceptle.com`,
+    expected: { puzzle: "116", score: 47, display: "D · 47", pattern: "🔢 9 🎯 0 📐 70 🥁 56 ✂️ 100" },
+  },
 ];

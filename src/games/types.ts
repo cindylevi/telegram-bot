@@ -28,5 +28,7 @@ export interface Game {
   // Hora argentina en la que cambia el puzzle, si no es a la medianoche: desde esa hora lo que se manda
   // cuenta para el día siguiente (Pedantle cambia a las 16).
   dayStartsAt?: number;
+  // Días (inclusive) en los que el bot no lo reconocía porque cambió el formato: no suman ni cortan la racha.
+  streakPauses?: { from: string; to: string }[];
   parse(text: string): ParsedResult | null;
 }

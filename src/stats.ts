@@ -1,5 +1,4 @@
-import { previousDay } from "./date";
-import { commonByPattern, hasCommon, hasMega } from "./games";
+import { commonByPattern, hasCommon, hasMega, inStreakPause, previousStreakDay } from "./games";
 import type { Direction } from "./games/types";
 import type { StoredResult } from "./store";
 
@@ -83,7 +82,7 @@ export function average(rows: StoredResult[]): number | null {
 
 export function longestCurrentStreak(valid: StoredResult[], game: string, day: string): Streak | null {
   const gameRows = valid.filter((row) => row.game === game);
-  const played = new Set(gameRows.map((row) => `${row.userId}|${row.day}`));
+  const played = new Set(gameRows.filter((row) => !inStreakPause(game, row.day)).map((row) => `${row.userId}|${row.day}`));
 
   let best: Streak | null = null;
   const seen = new Set<number>();
@@ -92,7 +91,7 @@ export function longestCurrentStreak(valid: StoredResult[], game: string, day: s
     seen.add(row.userId);
 
     let days = 0;
-    for (let current = day; played.has(`${row.userId}|${current}`); current = previousDay(current)) {
+    for (let current = day; played.has(`${row.userId}|${current}`); current = previousStreakDay(game, current)) {
       days += 1;
     }
 
@@ -182,21 +181,21 @@ export function bestEver(valid: StoredResult[], game: string, direction: Directi
   };
 }
 
-// La tanda de días seguidos más larga (la primera, si hay varias iguales).
-export function longestRun(days: Iterable<string>): { days: number; from: string; to: string } {
+// La tanda de días seguidos más larga (la primera, si hay varias iguales); los días en pausa del juego no cuentan.
+export function longestRun(days: Iterable<string>, game: string): { days: number; from: string; to: string } {
   let run = { days: 0, from: "", to: "" };
   let longest = run;
-  for (const day of [...days].sort()) {
-    run = run.days > 0 && previousDay(day) === run.to ? { ...run, days: run.days + 1, to: day } : { days: 1, from: day, to: day };
+  for (const day of [...days].filter((d) => !inStreakPause(game, d)).sort()) {
+    run = run.days > 0 && previousStreakDay(game, day) === run.to ? { ...run, days: run.days + 1, to: day } : { days: 1, from: day, to: day };
     if (run.days > longest.days) longest = run;
   }
   return longest;
 }
 
-// Días seguidos jugados terminando en `day` (0 si ese día no jugó).
-export function streakEndingAt(days: Set<string>, day: string): number {
+// Días seguidos jugados terminando en `day` (0 si ese día no jugó), salteando los días en pausa del juego.
+export function streakEndingAt(days: Set<string>, day: string, game: string): number {
   let count = 0;
-  for (let current = day; days.has(current); current = previousDay(current)) count += 1;
+  for (let current = day; days.has(current) && !inStreakPause(game, current); current = previousStreakDay(game, current)) count += 1;
   return count;
 }
 
@@ -204,7 +203,7 @@ export function longestStreakEver(valid: StoredResult[], game: string): Historic
   let best: { names: string[]; days: number; from: string; to: string } | null = null;
 
   for (const player of playersOf(valid, game).values()) {
-    const longest = longestRun(player.days);
+    const longest = longestRun(player.days, game);
 
     if (!best || longest.days > best.days) best = { names: [player.name], ...longest };
     else if (longest.days === best.days) best.names.push(player.name);
@@ -216,13 +215,13 @@ export function longestStreakEver(valid: StoredResult[], game: string): Historic
 }
 
 export function currentStreaks(valid: StoredResult[], game: string, day: string): CurrentStreak[] {
-  const yesterday = previousDay(day);
+  const yesterday = previousStreakDay(game, day);
   const streaks: CurrentStreak[] = [];
 
   for (const player of playersOf(valid, game).values()) {
     const start = player.days.has(day) ? day : player.days.has(yesterday) ? yesterday : null;
     if (!start) continue;
-    const days = streakEndingAt(player.days, start);
+    const days = streakEndingAt(player.days, start, game);
     if (days >= 2) streaks.push({ name: player.name, days, pendingToday: start !== day });
   }
 

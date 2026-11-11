@@ -18,6 +18,7 @@ import { poople } from "./poople";
 import { sizeItUp } from "./sizeItUp";
 import { smush } from "./smush";
 import { trivia } from "./trivia";
+import { previousDay } from "../date";
 import type { Game, ParsedResult } from "./types";
 
 export const GAMES: Game[] = [
@@ -52,6 +53,18 @@ export function hasCommon(gameId: string): boolean {
 
 export function commonByPattern(gameId: string): boolean {
   return GAMES.find((game) => game.id === gameId)?.commonByPattern === true;
+}
+
+export function inStreakPause(gameId: string, day: string): boolean {
+  const pauses = GAMES.find((game) => game.id === gameId)?.streakPauses ?? [];
+  return pauses.some((pause) => pause.from <= day && day <= pause.to);
+}
+
+// El día anterior que cuenta para la racha: se saltean los días en pausa del juego.
+export function previousStreakDay(gameId: string, day: string): string {
+  let previous = previousDay(day);
+  while (inStreakPause(gameId, previous)) previous = previousDay(previous);
+  return previous;
 }
 
 export function listGames(): string {

@@ -1,5 +1,5 @@
-import { gameDay, previousDay, shortDay } from "./date";
-import { GAMES } from "./games";
+import { gameDay, shortDay } from "./date";
+import { GAMES, previousStreakDay } from "./games";
 import type { Game } from "./games/types";
 import { goldCounts, historicTwin, longestRun, podium, streakEndingAt, twinsToday, validResults } from "./stats";
 import type { StoredResult } from "./store";
@@ -73,9 +73,12 @@ export function buildProfile(rows: StoredResult[], player: Player, day: string, 
       if (best) parts.push(`mejor ${best.display}`);
       // La racha sigue viva si jugó ayer y todavía no hoy, igual que en el detalle del juego.
       const played = new Set(gameRows.map((row) => row.day));
-      const record = longestRun(played).days;
+      const record = longestRun(played, game.id).days;
       if (record >= 2) {
-        const current = Math.max(streakEndingAt(played, day), streakEndingAt(played, previousDay(day)));
+        const current = Math.max(
+          streakEndingAt(played, day, game.id),
+          streakEndingAt(played, previousStreakDay(game.id, day), game.id),
+        );
         parts.push(`racha ${current} (récord ${record})`);
       }
       lines.push(parts.join(" · "));

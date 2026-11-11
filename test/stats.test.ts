@@ -395,3 +395,36 @@ describe("matchi matchi", () => {
     expect(historicTwin(rows, 5)).toBeNull();
   });
 });
+
+// Del 3 al 10 de noviembre de 2026 el bot no reconoció Size It Up (cambió el formato): esos días ni suman
+// ni cortan la racha.
+describe("rachas con días en pausa", () => {
+  const played = (userId: number, userName: string, day: string) => result({ userId, userName, game: "size-it-up", day });
+  const rows = [
+    played(1, "Male", "2026-11-01"),
+    played(1, "Male", "2026-11-02"),
+    played(1, "Male", "2026-11-03"),
+    played(1, "Male", "2026-11-11"),
+    played(2, "Juani", "2026-11-01"),
+    played(2, "Juani", "2026-11-02"),
+    played(3, "Rafa", "2026-10-31"),
+    played(3, "Rafa", "2026-11-11"),
+  ];
+
+  it("la racha de antes de la pausa sigue después", () => {
+    expect(longestCurrentStreak(rows, "size-it-up", "2026-11-11")).toEqual({ names: ["Male"], days: 3 });
+    expect(currentStreaks(rows, "size-it-up", "2026-11-11")).toEqual([
+      { name: "Male", days: 3, pendingToday: false },
+      { name: "Juani", days: 2, pendingToday: true },
+    ]);
+  });
+
+  it("la racha histórica salta la pausa", () => {
+    expect(longestStreakEver(rows, "size-it-up")).toEqual({ names: ["Male"], days: 3, from: "2026-11-01", to: "2026-11-11" });
+  });
+
+  it("en los otros juegos esos días siguen cortando la racha", () => {
+    const boludle = rows.map((row) => ({ ...row, game: "boludle" }));
+    expect(longestCurrentStreak(boludle, "boludle", "2026-11-11")).toBeNull();
+  });
+});

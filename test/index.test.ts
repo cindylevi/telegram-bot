@@ -102,7 +102,7 @@ describe("webhook", () => {
   });
 
   it("usa el día de envío como puzzle cuando el juego no trae número", async () => {
-    const sizeItUp = FIXTURES.find((f) => f.id === "size-it-up")!.text;
+    const sizeItUp = FIXTURES.find((f) => f.id === "size-it-up" && f.expected.puzzle === null)!.text;
     await post({ update_id: 1, message: message({ text: sizeItUp }) });
     expect((await storedRows())[0]).toMatchObject({ game: "size-it-up", puzzle: "2026-09-24" });
   });

@@ -60,6 +60,27 @@ Score: 86/100
   },
   {
     id: "size-it-up",
+    text: `Magnitudle — Size It Up
+2026-11-11
+
+Score: 368/500
+
+🟥🟥🟥🟥⬜ 81
+🟥🟥🟥⬜⬜ 61
+🟥⬜⬜⬜⬜ 27
+🟥🟥🟥🟥🟥 99
+🟥🟥🟥🟥🟥 100
+
+https://magnitudle.com/size-it-up`,
+    expected: {
+      puzzle: "2026-11-11",
+      score: 368,
+      display: "368",
+      pattern: "🟥🟥🟥🟥⬜ 81\n🟥🟥🟥⬜⬜ 61\n🟥⬜⬜⬜⬜ 27\n🟥🟥🟥🟥🟥 99\n🟥🟥🟥🟥🟥 100",
+    },
+  },
+  {
+    id: "size-it-up",
     text: `Size It Up
 Overall Score 185
 

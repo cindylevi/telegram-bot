@@ -59,6 +59,18 @@ Score: 86/100
     expected: { puzzle: "S24-Q02", score: 86, display: "86/100" },
   },
   {
+    id: "magnitudle",
+    text: `Daily Question
+#265
+
+Score: 83/100
+
+🟥🟥🟥🟥⬜ 83
+
+https://magnitudle.com/daily`,
+    expected: { puzzle: "265", score: 83, display: "83/100" },
+  },
+  {
     id: "size-it-up",
     text: `Magnitudle — Size It Up
 2026-11-11
@@ -77,6 +89,27 @@ https://magnitudle.com/size-it-up`,
       score: 368,
       display: "368",
       pattern: "🟥🟥🟥🟥⬜ 81\n🟥🟥🟥⬜⬜ 61\n🟥⬜⬜⬜⬜ 27\n🟥🟥🟥🟥🟥 99\n🟥🟥🟥🟥🟥 100",
+    },
+  },
+  {
+    id: "size-it-up",
+    text: `Size It Up
+#100
+
+Score: 251/500
+
+🟥🟥🟥⬜⬜ 69
+🟥🟥⬜⬜⬜ 30
+🟥🟥⬜⬜⬜ 46
+🟥🟥🟥🟥⬜ 75
+🟥🟥⬜⬜⬜ 31
+
+https://magnitudle.com/size-it-up`,
+    expected: {
+      puzzle: "100",
+      score: 251,
+      display: "251",
+      pattern: "🟥🟥🟥⬜⬜ 69\n🟥🟥⬜⬜⬜ 30\n🟥🟥⬜⬜⬜ 46\n🟥🟥🟥🟥⬜ 75\n🟥🟥⬜⬜⬜ 31",
     },
   },
   {

@@ -253,6 +253,21 @@ describe("aviso de matchi matchi", () => {
     expect(photos().at(-1)!.caption).toBe(`💖 ¡MEGA ${Array(13).fill("MATCHI").join(" ")} de ${people} y P13 en 🧉 Boludle!`);
   });
 
+  it("nombra con @ a quien tiene usuario de Telegram", async () => {
+    const lu = { id: 4, is_bot: false, first_name: "Lu", username: "LuLuu" };
+    await post({ update_id: 1, message: message() });
+    await post({ update_id: 2, message: message({ message_id: 2, from: lu }) });
+    expect(photos().map((photo) => photo.caption)).toEqual(["💖 ¡MEGA MATCHI MATCHI de Cindy y @luluu en 🧉 Boludle!"]);
+  });
+
+  it("el matchi matchi común también nombra con @", async () => {
+    const poople = FIXTURES.find((f) => f.id === "poople")!.text;
+    const lu = { id: 4, is_bot: false, first_name: "Lu", username: "luluu" };
+    await post({ update_id: 1, message: message({ text: poople }) });
+    await post({ update_id: 2, message: message({ message_id: 2, from: lu, text: poople.replace("⬜🟫🟫🟫", "🟫🟫🟫⬜") }) });
+    expect(sentTexts()).toEqual(["👯 ¡Cindy y @luluu hicieron matchi matchi en 🟫 Poople!"]);
+  });
+
   it("mismo puntaje con otra grilla es matchi matchi común", async () => {
     const poople = FIXTURES.find((f) => f.id === "poople")!.text;
     await post({ update_id: 1, message: message({ text: poople }) });

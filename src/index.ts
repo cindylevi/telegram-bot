@@ -3,7 +3,7 @@ import type { Env } from "./env";
 import { announceMega, type MegaPerson } from "./announce";
 import { buildDetail } from "./detail";
 import { ftForBlock, ftLines, ftOnly, resolvePartners, type Partners } from "./ft";
-import { loadUsernames, rememberUsername } from "./usernames";
+import { loadUsernames, mentionsOf, rememberUsername } from "./usernames";
 import { commandName, GAMES, gameByCommand, listGames, parseResults } from "./games";
 import type { Game } from "./games/types";
 import { choosePhoto, forgetPhoto, requestPhoto, takePhotoRequest } from "./photoStore";
@@ -209,12 +209,15 @@ async function saveResults(
     const us: MegaPerson[] = [{ userId: result.userId, name: result.userName }, ...shared.map((p) => ({ userId: p.userId, name: p.name }))];
     if (mega.length > 0) {
       const people = [...mega.map((twin) => ({ userId: twin.userId, name: twin.userName })), ...us];
+      const mentions = await mentionsOf(env.DB, people);
+      const tagged = people.map((person, i) => ({ ...person, mention: mentions[i] }));
       // La foto tarda: se manda después de contestarle a Telegram.
       defer(
-        announceMega(env, message.chat.id, match.game, people).catch((error) => console.error("aviso del MEGA", error)),
+        announceMega(env, message.chat.id, match.game, tagged).catch((error) => console.error("aviso del MEGA", error)),
       );
     } else if (twins.length > 0) {
-      const names = joinNames([...twins.map((twin) => twin.userName), ...us.map((person) => person.name)]);
+      const people = [...twins.map((twin) => ({ userId: twin.userId, name: twin.userName })), ...us];
+      const names = joinNames(await mentionsOf(env.DB, people));
       await sendMessage(env.BOT_TOKEN, message.chat.id, `👯 ¡${names} hicieron matchi matchi en ${match.game.emoji} ${match.game.name}!`);
     }
   }
